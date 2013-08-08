@@ -1,6 +1,7 @@
 {
 	"name": "phpcocktail/camarera",
-	"version": "1.01",
+	"description": "Camarera is a minimal framework, its main goal is to implement the activerecord and other related design patterns easily.",
+	"version": "1.1",
 	"dist": {
 		"type": "vcs",
 		"url": "https://github.com/phpcocktail/camarera"
