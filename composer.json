@@ -1,0 +1,12 @@
+{
+	"name": "phpcocktail/camarera",
+	"version": "1.01",
+	"dist": {
+		"type": "vcs",
+		"url": "https://github.com/phpcocktail/camarera"
+	},
+	"autoload": {
+		"classmap": ["src/"],
+		"files": ["bootstrap.php"]
+	}
+}

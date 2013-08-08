@@ -1,0 +1,18 @@
+Camarera is a minimal framework, its main goal is to implement the activerecord and other related design patterns easily.
+Features:
+	- easy CRUD with Models
+	- log support
+	- store management
+	- various store types, eg. sql, xml,
+	- autoloding, various parallel strategies
+	- object/data pool
+Sample code:
+
+	$Book = Book::get(789);
+	$Book->title = 'Odd title';
+	$Book->setTitle('Even title');
+	print_r($Book->Writer);
+	$Book->Writer = BookWriter::get()
+			->setName('M.W.Example');
+	$Book->Writer->born = '1987-06-05';
+	$Book->save();

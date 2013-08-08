@@ -1,0 +1,28 @@
+1.1
+	
+1.01
+	added namespace shifting (all classnames - where possible -  are used from global namespace, and all Camarera and
+		application classes shall be shifted into this global, if they dont exist already. Thus, all core classes are
+		overrideable simply by defining them in the global namespace, and they can extend the namespaced classes...
+	added Camarera::shiftClass() to shift a class one namespace up
+	changed all reference of classnames to static (except type hinting where not applicable)
+	fixed bug with loggers of array('Classname', 'methodName') types
+	updated documentation
+	added conf support
+	changed bootstrap in favour of confs
+	made composer compatible
+	logging made PSR3 compatible
+	added classlist.php (class lookup file for IDEs so they "understand" class shifting)
+	changed Util class so it uses multibyte string functions
+1.0 (up to 2013.02.21)
+    tests fixed up
+    StoreSqlite3Config::get() made compatible with parent
+    dumped trash
+    fixing newlines
+    added $loadOrder to ModelGetConfig
+    ModelManager added
+    added enableLoad to ModelGetConfig and added static calculate id from data method
+    added params to Model::get()
+    Mysqli support added and support for various storeconfig options
+    ModelTest better coverage
+    M1 Model and Store withbasic functionality done
