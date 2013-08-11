@@ -48,7 +48,6 @@ class AutoloaderNamespaceAliaser {
 		foreach (static::$_aliases as $eachAlias) {
 			if (($eachAlias[0]=='')) {
 				if (strpos($classname, '\\')) {
-				//	die('A');
 					continue;
 				}
 			}
