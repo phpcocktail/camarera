@@ -48,7 +48,7 @@ class StoreFilter {
 	 * @throws \InvalidArgumentException
 	 * @return \StoreFilter
 	 */
-	public static function get($operator, $field, $data) {
+	public static function build($operator, $field, $data) {
 
 		if (!in_array($operator, static::$_availableOperators)) {
 			throw new \InvalidArgumentException();
@@ -81,50 +81,50 @@ class StoreFilter {
 
 	public static function getAnd($data) {
 		static::_checkIsFilterArray($data);
-		return static::get('AND', null, $data);
+		return static::build('AND', null, $data);
 	}
 	public static function getOr($data) {
 		static::_checkIsFilterArray($data);
-		return static::get('OR', null, $data);
+		return static::build('OR', null, $data);
 	}
 	public static function getGt($field, $value) {
-		return static::get('>', $field, $value);
+		return static::build('>', $field, $value);
 	}
 	public static function getGte($field, $value) {
-		return static::get('>=', $field, $value);
+		return static::build('>=', $field, $value);
 	}
 	public static function getLt($field, $value) {
-		return static::get('<', $field, $value);
+		return static::build('<', $field, $value);
 	}
 	public static function getLte($field, $value) {
-		return static::get('<=', $field, $value);
+		return static::build('<=', $field, $value);
 	}
 	public static function getEquals($field, $value) {
-		return static::get('=', $field, $value);
+		return static::build('=', $field, $value);
 	}
 	public static function getNot($field, $value) {
-		return static::get('!=', $field, $value);
+		return static::build('!=', $field, $value);
 	}
 	public static function getBetween($field, $min, $max) {
-		return static::get('BETWEEN', $field, array($min, $max));
+		return static::build('BETWEEN', $field, array($min, $max));
 	}
 	public static function getNotBetween($field, $min, $max) {
-		return static::get('NOT BETWEEN', $field, array($min, $max));
+		return static::build('NOT BETWEEN', $field, array($min, $max));
 	}
 	public static function getIn($field, $values) {
-		return static::get('IN', $field, $values);
+		return static::build('IN', $field, $values);
 	}
 	public static function getNotIn($field, $values) {
-		return static::get('NOT IN', $field, $values);
+		return static::build('NOT IN', $field, $values);
 	}
 	public static function getLike($field, $value) {
-		return static::get('LIKE', $field, $value);
+		return static::build('LIKE', $field, $value);
 	}
 	public static function getNotLike($field, $value) {
-		return static::get('NOT LIKE', $field, $value);
+		return static::build('NOT LIKE', $field, $value);
 	}
 	public static function getRegexp($field, $value) {
-		return static::get('REGEXP', $field, $value);
+		return static::build('REGEXP', $field, $value);
 	}
 
 	protected function __construct() {}
