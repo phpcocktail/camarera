@@ -25,7 +25,12 @@ namespace Camarera;
  *
  * @package Camarera
  */
-trait TraitServe {
+trait TraitServeWithConfig {
+
+	/**
+	 * @var \Config if you override this in your subclass with proper comment you'll get nice autocompletion
+	 */
+	protected $_Config;
 
 	/**
 	 * I create and return an instance
@@ -33,9 +38,21 @@ trait TraitServe {
 	 * @param null|Config
 	 * @return static
 	 */
-	public static function serve($data=null) {
-		if (is_null($data)) {
-			$ret = new static;
+	public static function serve($dataOrConfig=null) {
+		if (is_null($dataOrConfig)) {
+			$ret = new static();
+		}
+		elseif (is_array($dataOrConfig)) {
+			$classname = get_called_class();
+			if ($pos = strpos($classname, '\\')) {
+				$classname = substr($classname, $pos);
+			}
+			$configClassname = $classname . 'Config';
+			$Config = $configClassname::get($dataOrConfig);
+			$ret = new static($Config);
+		}
+		elseif (is_object($dataOrConfig) && ($dataOrConfig instanceof \Config)) {
+			$ret = new static($dataOrConfig);
 		}
 		else{
 			throw new \InvalidArgumentException();
@@ -46,6 +63,22 @@ trait TraitServe {
 	/**
 	 * I am protected, use serve()
 	 */
-	protected function __construct() {}
+	protected function __construct(\Config $Config=null) {
+		if (is_null($Config)) {
+			$classname = get_class($this);
+			if ($pos=strpos($classname, '\\')) {
+				$classname = substr($classname, $pos);
+			}
+			$configClassname = $classname . 'Config';
+			$Config = $configClassname::get($Config);
+		}
+		$this->_Config = $Config;
+	}
+
+	/**
+	 * I am abstract so I have to be implemented in subclasses, with proper documentation for autocomplete etc.
+	 * @return \Config
+	 */
+	abstract public function getConfig();
 
 }
