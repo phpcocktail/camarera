@@ -14,7 +14,7 @@
  * @author t
  * @since 1.0
  * @license DWTFYWT
- * @version 1.01
+ * @version 1.1
  */
 namespace Camarera;
 
@@ -42,7 +42,7 @@ class StoreFilter {
 
 	/**
 	 * I return a filter instance based on params. Note there is not much validation on submitted data, you may want to
-	 * 		use getOperatorname() functions instead
+	 * 		use get{Operatorname}() functions instead
 	 * @param string $operator
 	 * @param array $data
 	 * @throws \InvalidArgumentException
