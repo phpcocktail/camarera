@@ -510,17 +510,17 @@ class Collection implements \Iterator, \Countable {
 			$filters = array();
 			foreach ($Config->filter as $filter) {
 				if (is_string($filter) || is_integer($filter)) {
-					$filters[] = \StoreFilter::getEquals('_id', $filter);
+					$filters[] = \StoreFilter::buildEquals('_id', $filter);
 				}
 				elseif (is_array($filter)) {
 					$filterData = array();
 					foreach ($filter as $eachFilterKey=>$eachFilter) {
-						$filterData[] = \StoreFilter::get('=', $eachFilterKey, $eachFilter);
+						$filterData[] = \StoreFilter::build('=', $eachFilterKey, $eachFilter);
 					}
-					$filters[] = StoreFilter::getAnd($filterData);
+					$filters[] = StoreFilter::buildAnd($filterData);
 				}
 			}
-			$Config->filter = \StoreFilter::get('OR', null, $filters);
+			$Config->filter = \StoreFilter::build('OR', null, $filters);
 
 		}
 
