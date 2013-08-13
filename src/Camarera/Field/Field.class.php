@@ -28,11 +28,6 @@ namespace Camarera;
 class Field extends \Config {
 
 	/**
-	 * @var string classname of model class which holds this field instance (note model class holds it staticly, not
-	 *	model obejcts individually)
-	 */
-	protected $_parentClassname = '';
-	/**
 	 * @var string name of the field in the model
 	 */
 	protected $_fieldName = '';
@@ -114,13 +109,10 @@ class Field extends \Config {
 	 * @param string $parentClassname
 	 * @return \Field
 	 */
-	public static function get(array $config, $fieldName=null, $parentClassname=null) {
+	public static function get(array $config, $fieldName=null) {
 		$Field = parent::get($config);
 		if (!is_null($fieldName)) {
 			$Field->_fieldName = $fieldName;
-		}
-		if (!is_null($parentClassname)) {
-			$Field->_parentClassname = $parentClassname;
 		}
 		// no defaulting here, we use defaulting only when a certain parameter is needed but not set
 		return $Field;
