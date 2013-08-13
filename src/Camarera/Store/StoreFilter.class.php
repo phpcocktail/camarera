@@ -10,19 +10,16 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.1
  */
 namespace Camarera;
 
 /**
- * I am a filter for a query, for internal usage
+ * I am a filter for a query, for internal usage. Indeed, I am just a representational object
+ *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Store
- * @version 1.01
+ * @version 1.1
  */
 class StoreFilter {
 
@@ -36,8 +33,17 @@ class StoreFilter {
 			'LIKE','NOT LIKE','REGEXP'
 	);
 
+	/**
+	 * @var string eg. 'AND'
+	 */
 	protected $_operator;
+	/**
+	 * @var string fieldname, or null
+	 */
 	protected $_field;
+	/**
+	 * @var array data for comparision, if one
+	 */
 	protected $_data=array();
 
 	/**
@@ -79,51 +85,61 @@ class StoreFilter {
 		};
 	}
 
-	public static function getAnd($data) {
+	/**
+	 * I combine filters by 'AND'
+	 * @param \StoreFilter[] $data filters to be combined
+	 * @return \StoreFilter
+	 */
+	public static function buildAnd($data) {
 		static::_checkIsFilterArray($data);
 		return static::build('AND', null, $data);
 	}
-	public static function getOr($data) {
+	/**
+	 * I combine filters by 'OR'
+	 * @param \StoreFilter[] $data filters to be combined
+	 * @return \StoreFilter
+	 */
+	public static function buildOr($data) {
 		static::_checkIsFilterArray($data);
 		return static::build('OR', null, $data);
 	}
-	public static function getGt($field, $value) {
+	public static function buildGt($field, $value) {
 		return static::build('>', $field, $value);
 	}
-	public static function getGte($field, $value) {
+	public static function buildGte($field, $value) {
 		return static::build('>=', $field, $value);
 	}
-	public static function getLt($field, $value) {
+	public static function buildLt($field, $value) {
 		return static::build('<', $field, $value);
 	}
-	public static function getLte($field, $value) {
+	public static function buildLte($field, $value) {
 		return static::build('<=', $field, $value);
 	}
-	public static function getEquals($field, $value) {
+	public static function buildEquals($field, $value) {
 		return static::build('=', $field, $value);
 	}
-	public static function getNot($field, $value) {
+	public static function buildNot($field, $value) {
 		return static::build('!=', $field, $value);
 	}
-	public static function getBetween($field, $min, $max) {
+	public static function buildBetween($field, $min, $max) {
 		return static::build('BETWEEN', $field, array($min, $max));
 	}
-	public static function getNotBetween($field, $min, $max) {
+	public static function buildNotBetween($field, $min, $max) {
 		return static::build('NOT BETWEEN', $field, array($min, $max));
 	}
-	public static function getIn($field, $values) {
+	public static function buildIn($field, $values) {
 		return static::build('IN', $field, $values);
 	}
-	public static function getNotIn($field, $values) {
+	public static function buildNotIn($field, $values) {
 		return static::build('NOT IN', $field, $values);
 	}
-	public static function getLike($field, $value) {
+	public static function buildLike($field, $value) {
 		return static::build('LIKE', $field, $value);
 	}
-	public static function getNotLike($field, $value) {
+	public static function buildNotLike($field, $value) {
 		return static::build('NOT LIKE', $field, $value);
 	}
-	public static function getRegexp($field, $value) {
+	public static function buildRegexp($field, $value) {
 		return static::build('REGEXP', $field, $value);
 	}
 

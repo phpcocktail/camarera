@@ -10,11 +10,6 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
@@ -22,9 +17,11 @@ namespace Camarera;
  * StoreConfig - base config for store driver configs. Each StoreXxx driver must have a StoreXxxConfig class which
  *	extends me, StoreConfig. I defined most of the commonly used parameters, however, not all store drivers may use them.
  * @see Camarera\Store on example usage
+ *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Store
- * @version 1.01
+ * @version 1.1
  * @property-read string $id internal ID of the store, in case you use more than one store you can refer them by this ID
  */
 abstract class StoreConfig extends \Config {
@@ -84,7 +81,7 @@ abstract class StoreConfig extends \Config {
 			return $this->_storeClassname;
 		}
 		$configClassname = get_class($this);
-		if (preg_match('/^([^\\\\]+\\\\)*(StoreDriver[A-Z][a-z0-9]+)Config$/', $configClassname, $matches)) {
+		if (preg_match('/^([^\\\\]+\\\\)*(Store[A-Z][a-zA-Z0-9]+)Config$/', $configClassname, $matches)) {
 			return $matches[2];
 		}
 		throw new \ClassDefinitionException('StoreXxx classname could not be guessed, ' . $configClassname . ' class should override default getStoreClassname()');

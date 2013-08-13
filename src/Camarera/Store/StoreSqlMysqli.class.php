@@ -10,21 +10,18 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
 /**
- * StoreDriverMySqli with new, recommended mysqli class usage
+ * StoreSqlMysqli with new, recommended mysqli class usage
+ *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Store
- * @version 1.01
+ * @version 1.1
  */
-class StoreDriverMysqli extends \StoreSql {
+class StoreSqlMysqli extends \StoreSql {
 
 	/**
 	 * @var \Mysqli this will hold the resource of the mysql connection
@@ -67,9 +64,9 @@ class StoreDriverMysqli extends \StoreSql {
 
 	/**
 	 * constructs object and connects do DB
-	 * @param StoreDriverMysqliConfig
+	 * @param StoreSqlMysqliConfig
 	 */
-	protected function __construct(\StoreDriverMysqliConfig $Config) {
+	protected function __construct(\StoreSqlMysqliConfig $Config) {
 
 		if (!empty($Config->socket)) {
 			$host = null;
@@ -102,7 +99,7 @@ class StoreDriverMysqli extends \StoreSql {
 
 		\Camarera::log(
 			\Camarera::LOG_INFORMATIONAL,
-			'StoreDriverMysqli #' . $Config->id . ' connected'
+			'StoreSqlMysqli #' . $Config->id . ' connected'
 		);
 
 	}

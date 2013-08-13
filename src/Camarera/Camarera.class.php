@@ -10,11 +10,6 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
@@ -37,8 +32,9 @@ namespace Camarera;
  * @see Camarera::$_confCache
  *
  * @author t
+ * @license DWTFYWT
  * @package Camarera
- * @version 1.01
+ * @version 1.1
  */
 class Camarera {
 
@@ -178,9 +174,9 @@ class Camarera {
 	private static function createStore(\StoreConfig $Config) {
 		$classname = $Config->getStoreClassname();
 		if (empty($classname)) {
-			throw new \InvalidArgumentException('$Config does not contain class');
+			throw new \InvalidArgumentException('$Config does not contain store class');
 		}
-		return $classname::get($Config);
+		return $classname::serve($Config);
 	}
 	/**
 	 * initializes and registers a store based on config array

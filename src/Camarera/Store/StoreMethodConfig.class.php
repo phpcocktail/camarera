@@ -10,11 +10,6 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
@@ -24,7 +19,9 @@ namespace Camarera;
  *	LoadModel() SaveModel() CreateModel() DeleteModel() methods as typehinted parameters. These store methods share
  *	some inner methods, abstracted as functional patterns, and these used StoreMethodConfig for typehinting for
  *	interchangeability of params depending on which method is calling.
+ *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Store
  * @version 1.01
  */

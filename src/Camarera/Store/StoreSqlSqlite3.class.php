@@ -10,21 +10,18 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
 /**
- * StoreDriverSqlite3 gives you simple file-based storage. Used by unit tests too.
+ * StoreSqlSqlite3 gives you simple file-based storage. Used by unit tests too.
+ *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Store
- * @version 1.01
+ * @version 1.1
  */
-class StoreDriverSqlite3 extends \StoreSql {
+class StoreSqlSqlite3 extends \StoreSql {
 
 	/**
 	 * @var \SQLite3
@@ -33,9 +30,9 @@ class StoreDriverSqlite3 extends \StoreSql {
 
 	/**
 	 * I create \Sqlite3 instance
-	 * @param \StoreDriverSqlite3Config $Config
+	 * @param \StoreSqlSqlite3Config $Config
 	 */
-	protected function __construct(\StoreDriverSqlite3Config $Config) {
+	protected function __construct(\StoreSqlSqlite3Config $Config) {
 		$filename = $Config->path . '/' . $Config->database;
 		$this->_connection = new \SQLite3($filename, $Config->openFlags, $Config->encryptionKey);
 		parent::__construct($Config);

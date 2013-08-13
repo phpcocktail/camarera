@@ -10,11 +10,6 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
@@ -23,17 +18,16 @@ namespace Camarera;
  *	here should be accessed from the outside. CRUD methods for Models and Collections shall be called and wrapped by
  *	themselves only. Also, you can execute your own sql queries by execute() and query(). Note that Camarera currently
  *	does not include a query builder.
+ *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Store
- * @version 1.01
+ * @version 1.1
+ * @property-read StoreConfig $Config
  */
 abstract class Store {
 
-	/**
-	 * @var StoreConfig it's always nice to have a copy of the config. Sensitive data eg.
-	 * 	passwords, file paths will be wiped after connecting (so they will never be screened)
-	 */
-	protected $_Config=array();
+	use \Camarera\TraitServeWithConfig;
 
 	/**
 	 * @var mixed this has to contain the last query which was executed
@@ -48,9 +42,12 @@ abstract class Store {
 	 */
 	protected $_lastAffectedRows;
 
-	public static function get(\StoreConfig $Config) {
-		$Store = new static($Config);
-		return $Store;
+	/**
+	 * @param StoreConfig $Config
+	 * @return static
+	 */
+	public static function serve(\StoreConfig $Config=null) {
+		return static::_serve($Config);
 	}
 
 	/**
@@ -88,19 +85,21 @@ abstract class Store {
 				return $this->_lastError;
 			case 'lastAffectedRows':
 				return $this->_lastAffectedRows;
+			case 'Config':
+				return $this->_Config;
 			default:
 				throw new \MagicGetException($fieldName, get_class($this));
 		}
 	}
 
 	/**
-	 * I shall execute a query (which currently can be a query string only, I exist to execute SQL queries indeed)
+	 * I execute a query (which currently can be a query string only, I exist to execute SQL queries indeed), without result
 	 * @param string $query
 	 * @return
 	 */
 	abstract public function execute($query);
 	/**
-	 *
+	 * I execute a query and return result
 	 */
 	abstract public function query($query, $idField=null);
 

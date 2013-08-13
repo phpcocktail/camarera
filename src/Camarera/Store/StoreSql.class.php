@@ -10,11 +10,6 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
@@ -22,9 +17,11 @@ namespace Camarera;
  * StoreSql class contains logic and template methods for SQL-based drivers such as StoreMysql for MySql. The query
  * 	generated here shall be good enough for all drivers. You can still override those methods for your drivers, if you
  *	would need. Basicly you'll have to define few abstract methods which depend on driver level calls.
+ *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Store
- * @version 1.01
+ * @version 1.1
  */
 abstract class StoreSql extends \Store {
 
