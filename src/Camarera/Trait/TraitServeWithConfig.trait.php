@@ -15,8 +15,13 @@ namespace Camarera;
 
 /**
  * Class TraitServe it is a standard serve() function to avoid confusion. There shall be another one, for models/collections
- *        serve() by default accepts only null to get an empty object OR ConfigXxx object to set it in $_Config (given
- *        that property exists!!!)
+ *		serve() by default accepts only null to get an empty object OR ConfigXxx object to set it in $_Config (given
+ *		that property exists!!!)
+ * note that this class has no support in serve() for sending object properties, if key=>val property array is sent, it
+ * 		is applied to the config.
+ * note: requires $this->_propertyExists($propertyName) defined (can be static, eg. as in TraitPropertyExists). Include
+ * 		use \Camarera\TraitServeWithConfig, \Camarera\TraitPropertyExists;
+ * 		to resolve the dependency
  *
  * @author t
  * @license DWTFYWT
@@ -84,21 +89,6 @@ trait TraitServeWithConfig {
 	 */
 	protected function __construct(\Config $Config) {
 		$this->_Config = $Config;
-	}
-
-	/**
-	 * I return some protected field from object. Actually, only $this->Config
-	 *
-	 * @param $key
-	 * @throws \MagicGetException
-	 */
-	public function __get($key) {
-		switch ($key) {
-			case 'Config':
-				return $this->_Config;
-			default:
-				throw new \MagicGetException();
-		}
 	}
 
 }

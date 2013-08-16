@@ -23,11 +23,20 @@ namespace Camarera;
  * @license DWTFYWT
  * @package Camarera\Store
  * @version 1.1
+ *
  * @property-read StoreConfig $Config
+ * @property-read string $id
+ * @property-read string $lastQuery
+ * @property-read array $lastErrors
+ * @property-read int $lastAffectedRwos
  */
 abstract class Store {
 
-	use \Camarera\TraitServeWithConfig;
+	use
+		\Camarera\TraitServeWithConfig,
+		\Camarera\TraitMagicGetProtected,
+		\Camarera\TraitPropertyExistsCached
+	;
 
 	/**
 	 * @var mixed this has to contain the last query which was executed
@@ -43,7 +52,7 @@ abstract class Store {
 	protected $_lastAffectedRows;
 
 	/**
-	 * @param StoreConfig $Config
+	 * @param \StoreConfig $Config
 	 * @return static
 	 */
 	public static function serve(\StoreConfig $Config=null) {
@@ -79,16 +88,8 @@ abstract class Store {
 		switch ($fieldName) {
 			case 'id':
 				return $this->_Config->id;
-			case 'lastQuery':
-				return $this->_lastQuery;
-			case 'lastError':
-				return $this->_lastError;
-			case 'lastAffectedRows':
-				return $this->_lastAffectedRows;
-			case 'Config':
-				return $this->_Config;
 			default:
-				throw new \MagicGetException($fieldName, get_class($this));
+				return static::___get($fieldName);
 		}
 	}
 

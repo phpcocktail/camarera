@@ -153,7 +153,7 @@ abstract class Model {
 				}
 
 				try {
-					$eachField = $classname::get($eachField, $eachFieldName, get_called_class());
+					$eachField = $classname::build($eachField, $eachFieldName);
 				}
 				catch (\InvalidArgumentException$e) {
 					if (!preg_match('/the field (.+) does not exist/', $e->getMessage())) {
@@ -167,7 +167,7 @@ abstract class Model {
 			}
 			// allow shorthand declarations of just fieldname instead of config array
 			elseif (is_string($eachField) && is_numeric($eachFieldName)) {
-				$fields[$eachField] = \FieldString::get(array('type'=>'string'), $eachField.'x', get_called_class());
+				$fields[$eachField] = \FieldString::build(array('type'=>'string'), $eachField.'x');
 				unset($fields[$eachFieldName]);
 			}
 			else {
@@ -188,7 +188,7 @@ abstract class Model {
 					'type' => 'integer',
 			);
 			$classname = \Camarera::conf('Field.id.class');
-			$Field = $classname::get($fieldConfig, $idFieldName, get_called_class());
+			$Field = $classname::build($fieldConfig, $idFieldName);
 			$fields[$idFieldName] = $Field;
 			$fields = array_reverse($fields, true);
 		}

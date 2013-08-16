@@ -10,18 +10,16 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
  */
 namespace Camarera;
 
 /**
  * basic field for models, typed fields should have a definition class which extends this
+ *
  * @author t
  * @package Camarera\Field
- * @version 1.0
+ * @license DWTFYWT
+ * @version 1.1
  *
  * @property-read string $storeQuote see: $_storeQuote
  */
@@ -103,14 +101,15 @@ class Field extends \Config {
 	protected $type = null;
 
 	/**
-	 * I get an instance
+	 * I build an instance
+	 * @todo make this serve()
 	 * @param unknown $config
 	 * @param string $fieldName
 	 * @param string $parentClassname
 	 * @return \Field
 	 */
-	public static function get(array $config, $fieldName=null) {
-		$Field = parent::get($config);
+	public static function build(array $config, $fieldName=null) {
+		$Field = parent::serve($config);
 		if (!is_null($fieldName)) {
 			$Field->_fieldName = $fieldName;
 		}
