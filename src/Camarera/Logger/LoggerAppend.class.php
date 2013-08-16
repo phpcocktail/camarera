@@ -10,19 +10,16 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.01
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
 /**
  * I will aggregate log content and output in __destruct(), in html format
- * @version 1.01
+ *
  * @author t
  * @package Camarera\Logger
+ * @license DWTFYWT
+ * @version 1.1
  */
 class LoggerAppend {
 

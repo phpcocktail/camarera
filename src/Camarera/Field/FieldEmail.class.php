@@ -10,18 +10,16 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
  */
 namespace Camarera;
 
 /**
  * timestamp field for models, will store datims in unix timestamp format
+ *
  * @author t
  * @package Camarera\Field
- * @version 1.01
+ * @license DWTFYWT
+ * @version 1.1
  */
 class FieldEmail extends \FieldString {
 

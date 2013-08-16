@@ -22,6 +22,7 @@ namespace Camarera;
  * @license DWTFYWT
  * @package Camarera\Store
  * @version 1.1
+ * 
  * @property-read string $id internal ID of the store, in case you use more than one store you can refer them by this ID
  */
 abstract class StoreConfig extends \Config {

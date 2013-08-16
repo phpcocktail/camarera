@@ -10,20 +10,16 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
  */
 namespace Camarera;
 
 /**
  * enum field for models, will store zero or one element of a set of possible values
+ *
  * @author t
  * @package Camarera\Field
- * @version 1.0
- *
- * @method FieldEnum setValidValues(array $validValues) I set valid values in $this->validValues
+ * @license DWTFYWT
+ * @version 1.1
  */
 class FieldEnum extends \Field {
 
@@ -40,6 +36,7 @@ class FieldEnum extends \Field {
 
 	/**
 	 * I check if value is valid
+	 * @todo fix scope bug here
 	 * @param mixed $value
 	 * @return mixed
 	 * @throws \InvalidArgumentException
@@ -56,11 +53,12 @@ class FieldEnum extends \Field {
 	 * @throws \InvalidArgumentException
 	 * @return \FieldEnum
 	 */
-	public static function get(array $config, $fieldName=null, $parentClassname=null) {
-		$Field = parent::get($config, $fieldName=null, $parentClassname=null);
+	public static function build(array $config, $fieldName=null) {
+		$Field = parent::build($config, $fieldName);
 		if (empty($Field->validValues)) {
 			throw new \InvalidArgumentException();
 		}
 		return $Field;
 	}
+
 }
