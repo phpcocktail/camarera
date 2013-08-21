@@ -109,7 +109,7 @@ class Field extends \Config {
 	 * @return \Field
 	 */
 	public static function build(array $config, $fieldName=null) {
-		$Field = parent::serve($config);
+		$Field = static::serve($config);
 		if (!is_null($fieldName)) {
 			$Field->_fieldName = $fieldName;
 		}
