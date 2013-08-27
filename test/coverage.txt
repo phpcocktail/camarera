@@ -1,0 +1,14 @@
+
+
+Code Coverage Report 
+  2013-08-27 23:58:47
+
+ Summary: 
+  Classes: 37.50% (9/24)
+  Methods: 9.82% (11/112)
+  Lines:   9.96% (111/1115)
+
+\Camarera::Model
+  Methods:  19.35% ( 6/31)   Lines:   5.78% ( 17/294)
+\Camarera::ModelMetaInfo
+  Methods: 100.00% ( 5/ 5)   Lines: 100.00% ( 94/ 94)
