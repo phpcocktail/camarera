@@ -1,4 +1,4 @@
- <?php
+<?php
 /**
  * Copyright © 2013 t
  * This work is free. You can redistribute it and/or modify it under the
@@ -52,7 +52,7 @@ class Collection implements \Iterator, \Countable {
 	/**
 	 * @var array[string]true,string,\Model model object registry, keyed by ID and value can be :
 	 * 		- reference of object instance (managed or not, depending on load conditions)
-	 * 		- true if data is set in model manager but not yet instanciated or referenced
+	 * 		- true if data is set in model manager but not yet instantiated or referenced
 	 * 		- string (or int) the same as the key, must be strict match (===) if data is not yet loaded
 	 */
 	protected $_instances = array();
@@ -107,7 +107,7 @@ class Collection implements \Iterator, \Countable {
 			));
 		}
 		elseif (is_object($itemsOrFilterOrConfig) && ($itemsOrFilterOrConfig instanceof \CollectionGetConfig)) {
-			$Config = $datasOrConfig;
+			$Config = $itemsOrFilterOrConfig;
 		}
 		else {
 			throw new \InvalidArgumentException();
@@ -150,7 +150,7 @@ class Collection implements \Iterator, \Countable {
 	}
 	public static function getByObjects($objects, \CollectionGetConfig $Config=null) {
 
-		if (!is_array($ids)) {
+		if (!is_array($objects)) {
 			goto invalid;
 		}
 
@@ -171,7 +171,7 @@ class Collection implements \Iterator, \Countable {
 	}
 	public static function getByFilter($filter, $Config=null) {
 
-		if (!is_object($filter) || !($filter instanceof Camarera\StoreFilter)) {
+		if (!is_object($filter) || !($filter instanceof \StoreFilter)) {
 			goto invalid;
 		}
 
@@ -213,7 +213,7 @@ class Collection implements \Iterator, \Countable {
 				return static::getModelClassname();
 			case $key === 'modelIdFieldName':
 				$classname = static::getModelClassname();
-				$idFieldName = $classname::getIdFieldName();
+				$idFieldName = $classname::idFieldName();
 				return $idFieldName;
 			default:
 				throw new \MagicGetException($key, get_class($this));
@@ -332,7 +332,7 @@ class Collection implements \Iterator, \Countable {
 				// @todo check 'registeredInstance' here?
 				// @todo add check for model-specific load config? does it make sense?
 				if (empty($AddArrayConfig)) {
-					$AddArrayConfig = ModelGetConfig::get(array(
+					$AddArrayConfig = ModelLoadConfig::get(array(
 							'allowLoad' => false,
 					));
 				}
@@ -356,7 +356,7 @@ class Collection implements \Iterator, \Countable {
 	 */
 	public function removeItems($items) {
 		foreach ($items AS &$item) {
-			if (is_object($item) && is_subclass_of($item, static::getModelClassname)) {
+			if (is_object($item) && is_subclass_of($item, static::getModelClassname())) {
 				$this->removeObject($item);
 			}
 			elseif (is_array($item)) {
@@ -471,8 +471,7 @@ class Collection implements \Iterator, \Countable {
 	public function load($filterOrDataOrConfig=null, \CollectionGetConfig $Config = null) {
 
 		if (!is_null($Config)) {
-			if (!is_o)
-			if (is_object($filterOrDataOrConfig) && ($filterOrDataOrConfig instanceof Camarera\CollectionGetConfig)) {
+			if (is_object($filterOrDataOrConfig) && ($filterOrDataOrConfig instanceof \CollectionGetConfig)) {
 				$Config->filter = $filterOrDataOrConfig;
 			}
 			elseif (is_array($filterOrDataOrConfig)) {
@@ -495,7 +494,7 @@ class Collection implements \Iterator, \Countable {
 					'allowLoad' => true,
 			));
 		}
-		elseif (is_object($filterOrDataOrConfig) && ($filterOrDataOrConfig instanceof Camarera\CollectionGetConfig)) {
+		elseif (is_object($filterOrDataOrConfig) && ($filterOrDataOrConfig instanceof \CollectionGetConfig)) {
 			$Config = $filterOrDataOrConfig;
 		}
 		else {

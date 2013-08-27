@@ -69,11 +69,11 @@ class Field extends \Config {
 	/**
 	 * @var numeric minimum length (strings) accepted
 	 */
-	public $minLength = null;
+	public $minLen = null;
 	/**
 	 * @var numeric maximum length (strings) accepted
 	 */
-	public $maxLength = null;
+	public $maxLen = null;
 
 	/**
 	 * @var string[] I am mandatory if any element of the array is present in the request
@@ -92,6 +92,11 @@ class Field extends \Config {
 	 */
 	public $unique = false;
 
+	/**
+	 * @var callable[] extra validators to be used
+	 */
+//	public $validators = array();
+
 	/** @var string this is just to let this param be in the getter config */
 	protected $classname = null;
 	/**
@@ -99,23 +104,6 @@ class Field extends \Config {
 	 *		'type'='int' instead of 'classname'=>'\FieldInt'
 	 */
 	protected $type = null;
-
-	/**
-	 * I build an instance
-	 * @todo make this serve()
-	 * @param unknown $config
-	 * @param string $fieldName
-	 * @param string $parentClassname
-	 * @return \Field
-	 */
-	public static function build(array $config, $fieldName=null) {
-		$Field = static::serve($config);
-		if (!is_null($fieldName)) {
-			$Field->_fieldName = $fieldName;
-		}
-		// no defaulting here, we use defaulting only when a certain parameter is needed but not set
-		return $Field;
-	}
 
 	/**
 	 * the actual internal value will be passed through this when exposing data. Eg. a datim field which stores
@@ -171,6 +159,11 @@ class Field extends \Config {
 		if (isset($this->maxLength) && (strlen($value)>$this->maxLength)) {
 			$errors['maxLength'] = $this->maxLength;
 		}
+//		foreach ($this->validators as $eachValidatorName=>$eachValidator) {
+//			if (!$eachValidator->validate($value, $this)) {
+//				$errors[$eachValidatorName] = $eachValidator->getValue();
+//			}
+//		}
 		return $errors;
 	}
 

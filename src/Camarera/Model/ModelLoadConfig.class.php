@@ -24,7 +24,7 @@ namespace Camarera;
  * @package Camarera\Model
  * @version 1.01
  */
-class ModelGetConfig extends \Config implements \Camarera\StoreMethodConfig {
+class ModelLoadConfig extends \Config implements \Camarera\StoreMethodConfig {
 
 	/**
 	 * @var string|array only these fields will be loaded, may be '*' or array of fieldnames
@@ -47,7 +47,7 @@ class ModelGetConfig extends \Config implements \Camarera\StoreMethodConfig {
 	/**
 	 * @var boolean controls whether ModelManager shall be used to get object/data or forced load shall happen
 	 */
-	public $managedInstance = true;
+	public $registeredInstance = true;
 
 	/**
 	 * @var array[string]mixed data used in get or load

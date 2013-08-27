@@ -108,9 +108,9 @@ abstract class Store {
 	 * I load a model's data based on current values.
 	 * @todo I return model's data, but may load other data (eager load) which I will register in the object pool
 	 * @param \Model $Object
-	 * @param \ModelGetConfig $LoadConfig
+	 * @param \ModelLoadConfig $LoadConfig
 	 */
-	abstract function loadModel(\Model $Object, \ModelGetConfig $LoadConfig);
+	abstract function loadModel(\Model $Object, \ModelLoadConfig $LoadConfig);
 	/**
 	 * I update an existing model. Update/create logic is in Model class.
 	 * @param \Model $Object

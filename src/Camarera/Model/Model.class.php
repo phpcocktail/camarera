@@ -31,6 +31,8 @@ namespace Camarera;
  *  * define basic CRUD store operation wrappers
  *  * be a good base for collections
  *
+ * note: if you want singleton functionality, add the \Camarera\TraitSingleton* trait to your class
+ *
  * @author t
  * @package Camarera\Model
  * @version 1.01
@@ -43,30 +45,20 @@ namespace Camarera;
  */
 abstract class Model {
 
-
 	/** @var string FIELD_NAME_PATTERN this is the pattern to match property names */
-	const FIELD_NAME_PATTERN = '/^(\_id)|([a-z]+[a-zA-Z0-9])*$/';
-
-	/**
-	 * @var string[] these fields must be re-declared in all subclasses locally
-	 */
-	private static $_mandatoryProperties = array(
-		'_idFieldName',
-		'_fields',
-		'_storeTable',
-	);
-
-	/** @var boolean $_inflated I set true here once static inflation is done */
-	private static $_inflated = array();
+	const FIELD_NAME_PATTERN = '/^(\_id)|([a-z]+[a-zA-Z0-9]*)$/';
 
 	/** @var \Field[] field objects */
 	protected static $_fields = null;
-	/** @var string[]|string I cache idFieldnames here, can be single string or array */
+	/** @var string[]|string you can define ID field name or names if ID is built of more than one field */
 	protected static $_idFieldName = null;
 	/** @var string I use this to implode id field values into uniqe ID, if there are more than one id fields */
 	protected static $_idFieldGlue = '_';
-
-	/** @var string override this to specify table name, or leave null to use the lowercase classname */
+	/**
+	 * override this to specify default table name, or leave null to use the lowercase classname
+	 * 		note it can be overridden in store access methods by proper configs
+	 * @var string
+	 */
 	protected static $_storeTable = null;
 
 
@@ -84,186 +76,50 @@ abstract class Model {
 	}
 
 	/**
-	 * I initialize all static variables which needs to be initialized, eg. I convert field defs, set idFieldName etc.
-	 * @return void
+	 * I call ModelMetaInfo::inflate() to initialize all static variables, convert field defs etc.
+	 * I only call once, hence the check for isInflated()
+	 *
+	 * @return string current scope classname. just for convenience, because many times it's needed right after inflate()
 	 * @throws \ClassDefinitionException - I throw this on all errors here
 	 */
 	protected static function _inflate() {
-
-		// init only once. Keep data in self array instead of statics, since otherwise misdefined classes with missing
-		//		static $_inflated definition sometimes would not get initialized at all
 		$classname = get_called_class();
-		if (isset(self::$_inflated[$classname]) && (self::$_inflated[$classname]=== true)) {
-			return;
-		}
-
-		// check if mandatory properties are defined
-		foreach (self::$_mandatoryProperties as $eachProperty) {
-			try {
-				$rProperty = new \ReflectionProperty($classname, $eachProperty);
-				if ($rProperty->getDeclaringClass()->name !== $classname) {
-					throw new \Exception();
-				}
-			}
-			catch (\Exception $e) {
-				throw new \ClassDefinitionException('static::$' . $eachProperty . ' property not declared in ' . get_called_class());
-			}
-		}
-
-		// get field defs
-		$fields = static::_getInitialFieldDefs();
-		if (empty($fields) || !is_array($fields)) {
-			throw new \ClassDefinitionException('initial field definition array is empty');
-		}
-		// inflate field objects
-		// @todo abstract to FieldHelper class ! ?
-		foreach ($fields as $eachFieldName=>&$eachField) {
-
-			if (!preg_match(static::FIELD_NAME_PATTERN, $eachFieldName)) {
-				throw new \ClassDefinitionException(
-						'field name ' . $eachFieldName . ' does not match field name pattern: ' . static::FIELD_NAME_PATTERN
-				);
-			}
-
-			// $eachField may already be a FieldXxx object, otherwise must be an array
-			if (is_object($eachField) && is_subclass_of($eachField, 'Camarera\Field'));
-			elseif (is_array($eachField)) {
-
-				if (!empty($eachField['type'])) {
-					$classname = '\Field' . ucFirst($eachField['type']);
-				}
-				elseif (!empty($eachField['classname'])) {
-					$classname = $eachField['classname'];
-				}
-				else {
-					throw new \ClassDefinitionException(
-							'neither "classname" nor "type" is set in ' . get_called_class() . ' field ' . $eachFieldName
-					);
-				};
-
-				try {
-					if (!class_exists($classname)) {
-						throw new \AutoloaderException();
-					}
-				}
-				catch (AutoloaderException $e) {
-					throw new \ClassDefinitionException(
-							'class ' . $classname . ' not found'
-					);
-				}
-
-				try {
-					$eachField = $classname::build($eachField, $eachFieldName);
-				}
-				catch (\InvalidArgumentException$e) {
-					if (!preg_match('/the field (.+) does not exist/', $e->getMessage())) {
-						throw $e;
-					}
-					$msg = 'Undefined field found while inflating class ' . get_called_class() . ' see previous exception for details';
-					throw new \InvalidArgumentException($msg, 0, $e);
-				}
-
-
-			}
-			// allow shorthand declarations of just fieldname instead of config array
-			elseif (is_string($eachField) && is_numeric($eachFieldName)) {
-				$fields[$eachField] = \FieldString::build(array('type'=>'string'), $eachField.'x');
-				unset($fields[$eachFieldName]);
-			}
-			else {
-				throw new \ClassDefinitionException('invalid field def in ' . get_called_class() . ' field ' . $eachFieldName);
-			}
-
-		}
-
-		if (empty(static::$_idFieldName)) {
-			static::$_idFieldName = \Camarera::conf('Field.id.name');
-		}
-
-		$idFieldName = static::$_idFieldName;
-		// if ID field is a single field, and missing, add it
-		if (is_string($idFieldName) && !array_key_exists($idFieldName, $fields)) {
-			$fields = array_reverse($fields, true);
-			$fieldConfig = array(
-					'type' => 'integer',
+		if (!\ModelMetaInfo::isInflated($classname)) {
+			\ModelMetaInfo::inflate(
+				$classname,
+				static::_getInitialFieldDefs(),
+				static::$_idFieldName,
+				static::$_storeTable
 			);
-			$classname = \Camarera::conf('Field.id.class');
-			$Field = $classname::build($fieldConfig, $idFieldName);
-			$fields[$idFieldName] = $Field;
-			$fields = array_reverse($fields, true);
 		}
-		// else check if all ID fields exist
-		elseif (is_array($idFieldName)) {
-			$missingFields = array();
-			foreach ($idFieldName AS $eachIdFieldName) {
-				if (!array_key_exists($eachIdFieldName, $fields)) {
-					$missingFields[] = $eachIdFieldName;
-				}
-			}
-			if (!empty($missingFields)) {
-				throw new \ClassDefinitionException(
-						'fields ' . implode(',', $missingFields) . ' are ID fields but not defined in ' . get_called_class()
-				);
-			}
-		}
-
-		static::$_fields = $fields;
-
-		if (is_null(static::$_storeTable)) {
-			$storeTable = get_called_class();
-			if ($pos = strrpos($storeTable, '\\')) {
-				$storeTable = substr($storeTable, $pos+1);
-			}
-			static::$_storeTable = strtolower($storeTable);
-		}
-
-		self::$_inflated[get_called_class()] = true;
-
+		return $classname;
 	}
 
 	/**
 	 * I get one or all fields
-	 * @param null|string|string[] $fieldName null = get all fields, string = get one field, array = get some fields
+	 * @param null|string|string[] $fieldnames null = get all fields, string = get one field, array = get some fields
 	 * @return array|\Field
 	 * @throws \InvalidArgumentException
 	 */
-	public static function getField($fieldNames=null) {
-		static::_inflate();
-		if (is_null($fieldNames)) {
-			return static::$_fields;
-		}
-		elseif (is_array($fieldNames)) {
-			return array_intersect_key(static::$_fields, array_flip($fieldNames));
-		}
-		elseif (is_string($fieldNames) && array_key_exists($fieldNames, static::$_fields)) {
-			return static::$_fields[$fieldNames];
-		}
-		else {
-			throw new \InvalidArgumentException('field ' . print_r($fieldNames,1) . ' not found in ' . get_called_class());
-		}
-	}
-	/**
-	 * @todo implement addFields()
-	 * @param type $fields
-	 */
-	public static function addField($fields) {
-		throw new UnImplementedException();
+	public static function field($fieldnames=null) {
+		$classname = static::_inflate();
+		return \ModelMetaInfo::getField($classname, $fieldnames);
 	}
 	/**
 	 * I return all id field names in array. Usually there will be just one, the array is for composite ID support
 	 * @return string[]
 	 */
-	public static function getIdFieldName() {
-		static::_inflate();
-		return static::$_idFieldName;
+	public static function idFieldName() {
+		$classname = static::_inflate();
+		return \ModelMetaInfo::getIdFieldname($classname);
 	}
 	/**
 	 * I return store table. For now just a string, in future, may be array for particioned store model
 	 * @return string|array
 	 */
-	public static function getStoreTable() {
-		static::_inflate();
-		return static::$_storeTable;
+	public static function storeTable() {
+		$classname = static::_inflate();
+		return \ModelMetaInfo::getStoreTable($classname);
 	}
 
 
@@ -272,17 +128,18 @@ abstract class Model {
 	//////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * @var boolean controls if this class is managable at all or not
+	 * @var boolean controls if this class is managable or not. Setting false is useful if you use the model without
+	 * 		store capabilities, eg. an input validator model shouldn't be managed in object pool, just used locally
 	 * @see \ModelManager
 	 */
-	protected static $_isManageable = true;
+	protected static $_isRegisterable = true;
 	/**
 	 * @var boolean tells if this instance is registered or not
 	 * @see \ModelManager
 	 */
 	protected $_isRegistered = false;
 	/**
-	 * @var \ModelGetConfig the last Config used in a get() or load()
+	 * @var \ModelLoadConfig the last Config used in a get() or load()
 	 */
 	protected $_lastGetConfig = null;
 
@@ -290,68 +147,75 @@ abstract class Model {
 	 * read-only access
 	 * @return boolean
 	 */
-	public static function isManageable() {
-		return static::$_isManageable;
+	public static function isRegisterable() {
+		return static::$_isRegisterable;
 	}
 
 	/**
 	 * I return an instance
-	 * @param null|int|string|array|ModelGetConfig $config depending on $config I will return various results
+	 * @param null|int|string|array|ModelLoadConfig $config depending on $config I will return various results
 	 * 		null - empty object
 	 * 		int|string - object with that ID @see setId()
 	 * 		array - key=>value pairs with which returned object will be initialized with
-	 * 		ModelGetConfig - same as calling with (null, $Config)
-	 * @param ModelGetConfig $Config get options. @see ModelGetConfig for options
+	 * 		ModelLoadConfig - same as calling with (null, $Config)
+	 * @param ModelLoadConfig $Config get options. @see ModelLoadConfig for options
 	 * @return \Model
 	 */
-	public static function get($dataOrConfig=null, \ModelGetConfig $Config=null) {
+	public static function serve($dataOrConfig=null, \ModelLoadConfig $Config=null) {
 
+		static::_inflate();
+
+		// if there are 2 params, map it to 1-param call
 		if (!is_null($Config)) {
 			$Config->data = $dataOrConfig;
-			return static::get($Config);
+			return static::serve($Config);
 		}
 
+		// now we only have $dataOrConfig, make one sane $Config object
 		if (is_null($dataOrConfig)) {
-			$Config = \ModelGetConfig::get();
+			$Config = \ModelLoadConfig::serve(array('allowLoad'=>false));
 		}
 		elseif (is_string($dataOrConfig) || is_integer($dataOrConfig) || is_array($dataOrConfig)) {
-			$Config = \ModelGetConfig::get(array(
+			$Config = \ModelLoadConfig::serve(array(
 					'data' => $dataOrConfig,
+					'allowLoad' => false,
 			));
 		}
-		elseif (is_object($dataOrConfig) && ($dataOrConfig instanceof Camarera\ModelGetConfig)) {
+		elseif (is_object($dataOrConfig) && ($dataOrConfig instanceof \ModelLoadConfig)) {
 			$Config = $dataOrConfig;
 		}
 		else {
 			throw new \InvalidArgumentException();
 		}
 
-		if (!isset($Config->data) || is_null($Config->data)) {
-			$Model = new static();
+		// load data is empty, create empty object
+		if (!isset($Config->data)) {
+			$Model = new static;
 		}
-		elseif (!empty($Config->data) &&
-				static::$_isManageable &&
-				$Config->managedInstance &&
-				$Config->allowLoad &&
-				($Model = \ModelManager::get(get_called_class(), $Config->data)));
+		// @todo add registerable case here. old code left comented for sample
+//		elseif (!empty($Config->data) &&
+//			static::$_isRegisterable &&
+//			$Config->registeredInstance &&
+//			$Config->allowLoad &&
+//			($Model = \ModelManager::get(get_called_class(), $Config->data)));
+		// $Config->data is PK value
 		elseif (is_integer($Config->data) || is_string($Config->data)) {
-			$Model = new static();
+			debug_print_backtrace(); die('TEST ME1');
+			$Model = new static;
 			$Model->setId($Config->data);
 			if ($Config->allowLoad) {
 				$result = $Model->load($Config);
-				if ($result && $Config->managedInstance) {
+				if ($result && $Config->registeredInstance) {
 					$Model->registerInstance();
 				}
 			}
 		}
 		elseif (is_array($Config->data)) {
-			$Model = new static();
-			foreach ($Config->data AS $eachField=>$eachValue) {
-				$Model->setValue($eachField, $eachValue);
-			}
+			$Model = new static;
+			$Model->setValue($Config->data, true);
 			if ($Config->allowLoad) {
 				$result = $Model->load($Config);
-				if ($result && $Config->managedInstance) {
+				if ($result && $Config->registeredInstance) {
 					$Model->registerInstance();
 				}
 			}
@@ -360,60 +224,15 @@ abstract class Model {
 		$Model->_lastGetConfig = $Config;
 
 		return $Model;
-
-	}
-	/**
-	 * I return an object with loaded data
-	 * @param string $dataOrConfig
-	 * @param ModelGetConfig $Config
-	 * @return \Model
-	 */
-	public static function getLoaded($dataOrConfig=null, \ModelGetConfig $Config=null) {
-		if (!is_null($Config)) {
-			$Config->allowLoad = true;
-		}
-		elseif (is_object($dataOrConfig) && $dataOrConfig instanceof Camarera\ModelGetConfig) {
-			$dataOrConfig->allowLoad = true;
-		}
-		return static::get($dataOrConfig, $Config);
 	}
 
 	/**
 	 * register instance with the Manager
 	 * @return \Model
 	 */
-	public function registerinstance() {
+	public function registerInstance() {
 		\ModelManager::set(get_class($this), $this);
 		return $this;
-	}
-
-
-	//////////////////////////////////////////////////////////////////////////
-	// SINGLETON
-	//////////////////////////////////////////////////////////////////////////
-
-	/**
-	 * I store the singleton instance in this var
-	 * @var self
-	 */
-	protected static $_instance;
-
-	/**
-	 * get the default instance by this
-	 */
-	public static function instance() {
-		if (is_null(static::$_instance)) {
-			// @todo here I should check if $_instance is defined in current model correctly
-			static::$_instance = static::_getInstance();
-		}
-		return static::$_instance;
-	}
-	/**
-	 * override this method to initialize the static instance automaticly
-	 * @return \Model
-	 */
-	protected static function _getInstance() {
-		return new static;
 	}
 
 
@@ -422,20 +241,10 @@ abstract class Model {
 	//////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * I return initial values, as in $this->_values so class definitions can include these.
-	 * Ride over this method eg. when you have to set an instanciated object by default
-	 * @return array
-	 */
-	protected function _getInitialValues() {
-		return $this->_values;
-	}
-
-	/**
 	 * I inflate my class if necessary, and set initial values
 	 */
 	protected function __construct() {
 		static::_inflate();
-		$this->_values = $this->_getInitialValues();
 	}
 
 	public function __get($field) {
@@ -443,15 +252,11 @@ abstract class Model {
 			case $field === 'ID':
 				return $this->getID();
 			case $field === 'idFieldName':
-				return static::getIdFieldName();
-			case $field === 'isDirty':
-				return $this->isDirty();
-			case $field === 'isManageable':
-				return static::$_isManageable;
+				return static::idFieldName();
 			case $field === 'isRegistered':
 				return $this->_isRegistered;
 			case $field === 'storeTable':
-				return $this->getStoreTable();
+				return $this->storeTable();
 			case $field === 'isValid':
 				return $this->_isValid;
 			//case $field === 'isLoaded':
@@ -504,7 +309,7 @@ abstract class Model {
 	//////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * @var array[string]mixed array of actual field values
+	 * @var array[string]mixed array of actual field values, keyed by fieldname
 	 */
 	protected $_values = array();
 	/**
@@ -537,7 +342,7 @@ abstract class Model {
 	 */
 	public function getID() {
 		$id = null;
-		$idFieldName = $this->getIdFieldName();
+		$idFieldName = static::idFieldName();
 		if (is_string($idFieldName)) {
 			$id = $this->getValue($idFieldName);
 		}
@@ -557,7 +362,7 @@ abstract class Model {
 	 */
 	public static function calculateIdByArray(array $data) {
 		$id = null;
-		$idFieldName = static::getIdFieldName();
+		$idFieldName = static::idFieldName();
 		if (is_string($idFieldName)) {
 			$id = array_key_exists($idFieldName, $data) ? $data[$idFieldName] : null;
 		}
@@ -596,9 +401,9 @@ abstract class Model {
 				throw new \BadMethodCallException('id ' . print_r($id,1) . ' invalid');
 			}
 
-			$idFieldName = static::getIdFieldName();
+			$idFieldName = static::idFieldName();
 			if (is_string($idFieldName)) {
-				$this->setValue($idFieldName, $this->getField($idFieldName)->setValue($id));
+				$this->setValue($idFieldName, $this->field($idFieldName)->setValue($id));
 			}
 			// @todo test this
 			elseif (is_array($idFieldName)) {
@@ -608,7 +413,7 @@ abstract class Model {
 				$idParts = explode(static::$_idFieldGlue, $id);
 				foreach ($idFieldName as $eachKey => $eachIdFieldName) {
 					$idPart = $idParts[$eachKey];
-					$idPart = $this->getField($eachIdFieldName)->setValue($idPart);
+					$idPart = $this->field($eachIdFieldName)->setValue($idPart);
 					$this->setValue($eachIdFieldName, $idPart);
 				}
 			}
@@ -627,7 +432,7 @@ abstract class Model {
 	 * @throws \MagicGetException
 	 * @return null|array|mixed field or fields based on param $field
 	 */
-	public function getValue($field, $storedValue=false) {
+	public function getValue($field=null, $storedValue=false) {
 
 		if (is_null($field)) {
 			$field = array_keys($storedValue ? $this->_storedValues : $this->_values);
@@ -647,7 +452,7 @@ abstract class Model {
 			$ret = null;
 			if (array_key_exists($field, $this->_values)) {
 				// I call the field get filter/processor
-				$ret = $this->getField($field)->getValue($storedValue ? $this->_storedValues[$field] : $this->_values[$field]);
+				$ret = $this->field($field)->getValue($storedValue ? $this->_storedValues[$field] : $this->_values[$field]);
 			}
 		}
 		else {
@@ -656,12 +461,19 @@ abstract class Model {
 		return $ret;
 	}
 	/**
-	 *
-	 * @param unknown $field
-	 * @return mixed
+	 * unified setter for one value or for array of values. depending on number of params I forward to setValue or
+	 * 		_setValues. I exists so the naming only interferes with field name 'Value' and not with 'Values'
+	 * @param string|array $fieldOrData
+	 * @param null|mixed $valueOrReplace @see _setValues()
+	 * @param null|bool $throw @see _setValues()
 	 */
-	public function getStoredValue($field) {
-		return $this->getValue($field, true);
+	public function setValue($fieldOrData, $valueOrReplace=null, $throw=null) {
+		if (is_array($fieldOrData)) {
+			return $this->_setValues($fieldOrData, $valueOrReplace, $throw);
+		}
+		else {
+			return $this->_setValue($fieldOrData, $valueOrReplace);
+		}
 	}
 	/**
 	 * set one value, if it is writeable (otherwise, you have to take care of setting that parameter)
@@ -671,13 +483,14 @@ abstract class Model {
 	 * @throws MagicSetException
 	 * @return \Model
 	 */
-	public function setValue($field, $value) {
+	protected function _setValue($field, $value) {
 		if (!array_key_exists($field, static::$_fields)) {
 			throw new \MagicSetException($field, get_class($this));
 		}
 
 		// I call field object's set validator/processor. Normally it returns $value unintact, otherwise modifies it
-		$this->getField($field)->setValue($value);
+		$Field = $this->field($field);
+		$Field->setValue($value);
 		$this->_values[$field] = $value;
 		return $this;
 	}
@@ -690,7 +503,7 @@ abstract class Model {
 	 * @throws \Exception
 	 * @return \Model
 	 */
-	public function setValues($values, $replace=false, $throw=true) {
+	protected function _setValues($values, $replace=false, $throw=true) {
 		if (!is_array($values)) {
 			throw new \InvalidArgumentException("setValues argument not array");
 		}
@@ -723,21 +536,29 @@ abstract class Model {
 	public function isDirty() {
 		return $this->_values === $this->_storedValues ? true : false;
 	}
-	public function isFieldDirty($field) {
-		if (is_array($field)) {
-			$ret = $field;
+
+	/**
+	 * I tell if one or a set of fields is/are dirty or not
+	 *
+	 * @param string|string[] $fieldname field name or array of field names
+	 * @return array|bool
+	 * @throws \InvalidArgumentException
+	 */
+	public function isFieldDirty($fieldname) {
+		if (is_array($fieldname)) {
+			$ret = $fieldname;
 			foreach ($ret AS &$eachField) {
 				$eachField = $this->isFieldDirty($eachField);
 			}
 		}
-		elseif (is_string($field)) {
-			$ret = $array_key_exists($eachField, $this->_values) &&
-					array_key_exists($eachField, $this->_storedValues) &&
-					($this->_values[$eachField] == $this->_storedValues[$eachField])
+		elseif (is_string($fieldname)) {
+			$ret = array_key_exists($fieldname, $this->_values) &&
+					array_key_exists($fieldname, $this->_storedValues) &&
+					($this->_values[$fieldname] == $this->_storedValues[$fieldname])
 				? true : false;
 		}
 		else {
-			throw new \BadMethodCallException('field name invalid');
+			throw new \InvalidArgumentException('field name invalid');
 		}
 		return $ret;
 	}
@@ -793,7 +614,7 @@ abstract class Model {
 	 * @throws \BadMethodCallException
 	 * @throws \InvalidArgumentException
 	 */
-	public static function setStore(int $storeId, $storeOrStoreName) {
+	public static function setStore($storeId, $storeOrStoreName) {
 		if (is_string($storeOrStoreName));
 		elseif (is_object($storeOrStoreName) && is_subclass_of($storeOrStoreName, 'Camarera\Store'));
 		else {
@@ -819,13 +640,13 @@ abstract class Model {
 
 	/**
 	 * I load a model
-	 * @param \ModelGetConfig $LoadConfig
+	 * @param \ModelLoadConfig $LoadConfig
 	 * @return bool
 	 * @throws UnImplementedException
 	 */
-	public function load(\ModelGetConfig $LoadConfig=null) {
+	public function load(\ModelLoadConfig $LoadConfig=null) {
 		if (is_null($LoadConfig)) {
-			$LoadConfig = \ModelGetConfig::get();
+			$LoadConfig = \ModelLoadConfig::get();
 		}
 		$data = $this->getStore(static::STORE_READ)->loadModel($this, $LoadConfig);
 		if ($data === false) {
@@ -872,9 +693,9 @@ abstract class Model {
 	}
 
 	/**
-	 * I delete a record. ModelGetConfig seems feasible to encapsulate delete options (I'll need eager delete later) but
+	 * I delete a record. ModelLoadConfig seems feasible to encapsulate delete options (I'll need eager delete later) but
 	 * 		this may change.
-	 * @param \ModelGetConfig $LoadConfig
+	 * @param \ModelLoadConfig $LoadConfig
 	 * @throws \RuntimeException
 	 * @return boolean true on success
 	 */

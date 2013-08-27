@@ -1,7 +1,7 @@
 <?php
 // just a draft how it should or not work.
 /*
-use Camarera\ModelGetConfig;
+use Camarera\ModelLoadConfig;
 
 use Camarera\CollectionGetConfig;
 
@@ -35,9 +35,9 @@ $LatestVideos = VideoCollection::get(
 		))
 );
 
-$Video1 = Video::get(ModelGetConfig::get(array('loadOrder'=>'_id DESC')));
-$Video2 = Video::get(ModelGetConfig::get(array('loadOrder'=>'view_cnt DESC')));
-$Video3 = Video::get(ModelGetConfig::get(array('loadOrder'=>'like_cnt DESC')));
+$Video1 = Video::get(ModelLoadConfig::get(array('loadOrder'=>'_id DESC')));
+$Video2 = Video::get(ModelLoadConfig::get(array('loadOrder'=>'view_cnt DESC')));
+$Video3 = Video::get(ModelLoadConfig::get(array('loadOrder'=>'like_cnt DESC')));
 
 $VideoSamples = VideoCollection::get(array($Video1, $Video2, $Video3));
 

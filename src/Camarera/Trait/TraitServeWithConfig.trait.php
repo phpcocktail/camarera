@@ -69,9 +69,9 @@ trait TraitServeWithConfig {
 		elseif (is_array($dataOrConfig)) {
 			$classname = get_called_class();
 			if ($pos = strpos($classname, '\\')) {
-				$classname = substr($classname, $pos);
+				$classname = substr($classname, $pos+1);
 			}
-			$configClassname = $classname . 'Config';
+			$configClassname = '\\' . $classname . 'Config';
 			$Config = $configClassname::serve($dataOrConfig);
 			$ret = new static($Config);
 		}

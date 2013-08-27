@@ -80,11 +80,11 @@ class ModelManager {
 							}
 							else {
 								// @todo set $ret here???
-								$Config = \ModelGetConfig::serve(array(
+								$Config = \ModelLoadConfig::serve(array(
 										'allowLoad' => false,
 								));
 								$idOrData = $modelClass::get()
-									->setValues($idOrData, true);
+									->setValue($idOrData, true);
 								break;
 							}
 						}
@@ -143,7 +143,7 @@ class ModelManager {
 */
 
 	/**
-	 * I get an object from the registry by IDget
+	 * I get an object from the registry by ID
 	 * @param string $modelClass with namepsace
 	 * @param int|string $id
 	 * @return NULL|\Model
@@ -157,7 +157,7 @@ class ModelManager {
 			}
 			elseif (is_array(self::$_registry[$modelClass][$id])) {
 				// @todo I'll have to implement some default features here like disallow loading from store or registry
-				$Config = \ModelGetConfig::serve(array(
+				$Config = \ModelLoadConfig::serve(array(
 					'allowLoad' => false,
 				));
 				$ret = self::$_registry[$modelClass][$id] = $modelClass::get(self::$_registry[$modelClass][$id], $Config);

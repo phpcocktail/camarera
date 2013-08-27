@@ -34,7 +34,7 @@ trait TraitMagicGetMask {
 	 *		coding style. By default, eg. using $Object->$foo either matches a public property in $Object, or, calls
 	 *		magic __get('foo') which in turn looks for a protected $_foo property in $Object
 	 */
-	private static $__fieldNameMask = '/^[A-Za-z0-9]*$/';
+	protected static $__fieldNameMask = '/^[A-Za-z0-9]*$/';
 
 	/**
 	 * I just am a wrapper to ___get(). Override this __get() in your class to add functionality, then in the default

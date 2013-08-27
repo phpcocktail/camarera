@@ -107,7 +107,7 @@ abstract class StoreSql extends \Store {
 	/**
 	 * @see \Store::loadModel()
 	 */
-	public function loadModel(\Model $Model, \ModelGetConfig $LoadConfig) {
+	public function loadModel(\Model $Model, \ModelLoadConfig $LoadConfig) {
 		$modelClassname = get_class($Model);
 		$query = 'SELECT ' . $this->_loadModelGetFields($modelClassname, $LoadConfig) .
 				' FROM ' . $this->_loadModelGetTables($modelClassname, $LoadConfig) .
@@ -141,7 +141,7 @@ abstract class StoreSql extends \Store {
 	}
 
 	protected function _loadModelGetFields($modelClassname, \Camarera\StoreMethodConfig $LoadConfig) {
-		$ModelFields = array_keys($modelClassname::getField());
+		$ModelFields = array_keys($modelClassname::field());
 		$configFields = $LoadConfig->loadFields;
 		if (($configFields === '*') || is_null($configFields)) {
 			$loadFields = $ModelFields;
@@ -175,7 +175,7 @@ abstract class StoreSql extends \Store {
 		$whereData = array();
 		$modelValues = $Model->getValue(null);
 		foreach ($modelValues as $eachFieldName=>$eachFieldValue) {
-			$quotes = $Model->getField($eachFieldName)->storeQuote;
+			$quotes = $Model::field($eachFieldName)->storeQuote;
 			$whereData[($withTableNames ? $this->_Config->tablePrefix . $Model::getStoreTable() . '.' : '') . $eachFieldName] = static::escape($eachFieldValue, $quotes);
 		}
 		return $whereData;
@@ -206,7 +206,7 @@ abstract class StoreSql extends \Store {
 	 */
 	public function updateModel(\Model $Model, \ModelSaveConfig $SaveConfig) {
 
-		if (is_array($Model->getIdFieldName())) {
+		if (is_array($Model::idFieldName())) {
 			throw new \UnImplementedException();
 		}
 
@@ -215,14 +215,14 @@ abstract class StoreSql extends \Store {
 		$data = $this->_updateModelGetData($Model, $SaveConfig, empty($id));
 		$sets = array();
 		foreach ($data as $eachField=>$eachValue) {
-			$quotes = $Model->getField($eachField)->storeQuote;
+			$quotes = $Model::field($eachField)->storeQuote;
 			$sets[] = ' ' . $eachField . '=' . $this->escape($eachValue, $quotes);
 		}
 
 		$wheres = array();
-		$idFieldName = (array) $Model->getIdFieldName();
+		$idFieldName = (array) $Model::idFieldName();
 		foreach ($idFieldName as $eachIdFieldName) {
-			$quotes = $Model->getField($eachIdFieldName)->storeQuote;
+			$quotes = $Model::field($eachIdFieldName)->storeQuote;
 			$wheres[] = $eachIdFieldName . '=' . $this->escape($Model->getValue($eachIdFieldName), $quotes);
 		}
 
@@ -244,7 +244,7 @@ abstract class StoreSql extends \Store {
 	protected function _updateModelGetData(\Model $Model, \ModelSaveConfig $SaveConfig, $isInsert=true) {
 		// @todo implement $SaveConfig save field filter here
 		$saveFields = $Model->getValue(null);
-		$idFieldName = (array) $Model->getIdFieldName();
+		$idFieldName = (array) $Model::idFieldName();
 		foreach ($idFieldName AS $eachIdFieldName) {
 			unset($saveFields[$eachIdFieldName]);
 		}
@@ -275,13 +275,13 @@ abstract class StoreSql extends \Store {
 		}
 
 		if (is_null($insertData)) {
-			$idFieldName = $Model->getIdFieldName();
+			$idFieldName = $Model::idFieldName();
 			if (!is_string($idFieldName)) {
 				throw new \RuntimeException('$fieldName should be string, for multiple ID fields you should override ' . get_class($this) . '::_prepareInsert()');
 			}
 			$insertId = $this->_getInsertId();
 			$insertData = array (
-					$idFieldName => $Model->getField($idFieldName)->setValue($insertId),
+					$idFieldName => $Model::field($idFieldName)->setValue($insertId),
 			);
 		}
 
