@@ -31,24 +31,11 @@ namespace Camarera;
  */
 class ModelManager {
 
-	protected static $_ModelManager;
-
 	/**
 	 * @var array[string](array|object) the main data registry, holds either data of the given object only (for lazy
 	 * 		init) or object instances themselves
 	 */
 	protected static $_registry = array();
-
-	/**
-	 * singleton
-	 * @return \ModelManager
-	 */
-	public static function instance() {
-		if (is_null(self::$_ModelManager)) {
-			self::$_ModelManager = new self();
-		}
-		return self::$_ModelManager;
-	}
 
 	/**
 	 * I need no setup
@@ -76,21 +63,21 @@ class ModelManager {
 						// if $dataOrInstance is array and contains $idOrData
 						if (array_intersect($idOrData, $dataOrInstance) === $idOrData) {
 							if (!$asObject) {
-								$ret = $idOrData;
+								$ret = $dataOrInstance;
 							}
 							else {
 								// @todo set $ret here???
 								$Config = \ModelLoadConfig::serve(array(
 										'allowLoad' => false,
 								));
-								$idOrData = $modelClass::get()
+								$ret = $modelClass::serve()
 									->setValue($idOrData, true);
 								break;
 							}
 						}
 					}
 					elseif ($dataOrInstance->valuesContain($idOrData)) {
-						$ret = $asObject ? $idOrData : $idOrData->getValues(null);
+						$ret = $asObject ? $dataOrInstance : $dataOrInstance->getValue(null);
 						break;
 					}
 				}
@@ -160,7 +147,7 @@ class ModelManager {
 				$Config = \ModelLoadConfig::serve(array(
 					'allowLoad' => false,
 				));
-				$ret = self::$_registry[$modelClass][$id] = $modelClass::get(self::$_registry[$modelClass][$id], $Config);
+				$ret = self::$_registry[$modelClass][$id] = $modelClass::serve(self::$_registry[$modelClass][$id], $Config);
 			}
 		}
 		return $ret;
@@ -177,7 +164,7 @@ class ModelManager {
 		$ret = null;
 		if (isset(self::$_registry[$modelClass][$id])) {
 			if (is_object(self::$_registry[$modelClass][$id])) {
-				$ret = self::$_registry[$modelClass][$id]->getValues(null);
+				$ret = self::$_registry[$modelClass][$id]->getValue(null);
 			}
 			elseif (is_array(self::$_registry[$modelClass][$id])) {
 				$ret = self::$_registry[$modelClass][$id];
@@ -197,20 +184,15 @@ class ModelManager {
 	 */
 	public static function set($modelClass, $dataOrObject=null, $precalculatedId=null) {
 
-		if (is_null($dataOrObject) && is_object($modelClass)) {
-			$dataOrObject = $modelClass;
-			$modelClass = get_class($dataOrObject);
-		}
-
 		if (is_array($dataOrObject) && !empty($dataOrObject));
-		elseif (is_object($dataOrObject) && (is_a($dataOrObject, $modelClass) || is_subclass_of($dataOrObject, $modelClass))) {
+		elseif (is_object($dataOrObject) && ($dataOrObject instanceof $modelClass)) {
 			// only models can be registered
-			if (!is_subclass_of($dataOrObject, 'Camarera\Model')) {
-				throw new \BadMethodCallException();
+			if (!$dataOrObject instanceof \Model) {
+				throw new \InvalidArgumentException();
 			}
 		}
 		else {
-			throw new \BadMethodCallException();
+			throw new \InvalidArgumentException();
 		}
 
 		if (!isset(self::$_registry[$modelClass])) {
@@ -222,6 +204,10 @@ class ModelManager {
 				? $dataOrObject->getID()
 				: $modelClass::calculateIdByArray($dataOrObject))
 			: $precalculatedId;
+
+		if (is_null($id)) {
+			throw new \InvalidArgumentException('ID shouldn\'t be null here');
+		}
 
 		self::$_registry[$modelClass][$id] = $dataOrObject;
 

@@ -306,14 +306,6 @@ class ModelManager extends Camarera\ModelManager {};
 class CollectionBuilder extends Camarera\CollectionBuilder {};
 
 /**
- * collection get/load behaviour config
- * @author t
- * @package Camarera\Collection
- * @version 1.01
- */
-class CollectionGetConfig extends Camarera\CollectionGetConfig {};
-
-/**
  *
  * @author t
  * @package Camarera\Collection
@@ -325,6 +317,14 @@ class CollectionGetConfig extends Camarera\CollectionGetConfig {};
  * @property-read array|string $modelIdFieldName modelClassname's idFieldName
  */
 class Collection extends Camarera\Collection {};
+
+/**
+ * collection get/load behaviour config
+ * @author t
+ * @package Camarera\Collection
+ * @version 1.01
+ */
+class CollectionLoadConfig extends Camarera\CollectionLoadConfig {};
 
 /**
  * I will aggregate log content and output in __destruct(), in html format

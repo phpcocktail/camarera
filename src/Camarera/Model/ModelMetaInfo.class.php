@@ -66,6 +66,11 @@ class ModelMetaInfo extends Model {
 	protected static $_storeTables = array();
 
 	/**
+	 * @var string[] names of related collection classes, indexed by model classname
+	 */
+	protected static $_collectionClassnames = array();
+
+	/**
 	 * I take a config array of field definitions and convert them to real FieldXxx objects
 	 * @param string $classname
 	 * @param array $fields
@@ -74,7 +79,7 @@ class ModelMetaInfo extends Model {
 	 * @throws \InvalidArgumentException
 	 * @throws \ClassDefinitionException
 	 */
-	public static function inflate($classname, &$fields, $idFieldnames, $storetable) {
+	public static function inflate($classname, $fields, $idFieldnames, $storetable, $collectionClassname) {
 
 		if (isset(static::$_inflatedClassnames[$classname])) {
 			throw new \RuntimeException('classname ' . $classname . ' already inflated');
@@ -181,6 +186,13 @@ class ModelMetaInfo extends Model {
 
 		static::$_inflatedClassnames[$classname] = true;
 
+		if (!is_null($collectionClassname));
+		elseif (class_exists($collectionClassname = $classname . 'Collection'));
+		else {
+			$collectionClassname = 'Collection';
+		}
+		static::$_collectionClassnames[$classname] = $collectionClassname;
+
 	}
 
 	/**
@@ -248,6 +260,15 @@ class ModelMetaInfo extends Model {
 			throw new \RuntimeException('class ' . $classname . ' hasn\'t been inflated');
 		}
 		return static::$_storeTables[$classname];
+	}
+
+	/**
+	 * I return a collection class name that can handle these models
+	 * @param $classname
+	 * @return string
+	 */
+	public static function getCollectionClassname($classname) {
+		return static::$_collectionClassnames[$classname];
 	}
 
 }

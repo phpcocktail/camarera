@@ -14,7 +14,7 @@
  * @author t
  * @since 1.0
  * @license DWTFYWT
- * @version 1.01
+ * @version 1.1
  */
 namespace Camarera;
 
@@ -28,7 +28,7 @@ namespace Camarera;
  *  * should be used in usage scope (in the object/method it is passed to), and not directly (eg. don't molest a Model's
  *  	Field->$default unless you have reason,)
  *
- * 	* have real properties defined in PHP, public or protected (tip: use @property docs for easy autocomplete)
+ * 	* have real properties defined in PHP, public or protected (tip: use @ property docs for easy autocomplete)
  *
  *  * by default, properties with names like $someThing are considered config properties (see $_fieldNameMask)
  *
@@ -52,7 +52,7 @@ namespace Camarera;
  *		...
  *		public $paramX;
  *
- *		// @return ManyParams (add proper phpdoc in live code to get nice autocomplete, cannot nest here in example)
+ *		// #return ManyParams (add proper phpdoc in live code to get nice autocomplete, cannot nest here in example)
  *		public static function serve($config=null) {
  *			return parent::serve($config);
  *		}
@@ -64,7 +64,7 @@ namespace Camarera;
  *			->setParam1('value1')
  *			->setParam2('value2')
  *			...
- *			->setParamX('value x')
+ *			->setParamXxx('value x')
  * );
  *
  * // this oldschool example is the same IDD

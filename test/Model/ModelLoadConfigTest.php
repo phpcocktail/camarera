@@ -16,28 +16,17 @@
  * @version 1.1
  */
 
-class TestModelA extends \Model {
+require_once(realpath(dirname(__FILE__) . '/../../vendor') . '/autoload.php');
 
-	use TraitTestModel;
+use \Camarera\ModelLoadConfig;
 
-	public static $fieldNames = array('_id','x1','x2','s1','s2');
+class ModelLoadConfigTest extends PHPUnit_Framework_TestCase {
 
-	protected static $_fields = array(
-		'x1' => array(
-			'type' => 'integer',
-			'minVal' => 1,
-			'maxVal' => 10,
-		),
-		'x2' => array(
-			'type' => 'integer',
-			'minVal' => 1,
-			'maxVal' => 100,
-		),
-		's1' => array(
-			'type' => 'string',
-			'minLen' => 3,
-			'maxLen' => 10,
-		),
-		's2',
-	);
+	/**
+	 * @covers ModelLoadConfig
+	 */
+	function testConstruct() {
+		$Config = ModelLoadConfig::serve();
+	}
+
 }

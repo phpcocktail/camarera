@@ -89,7 +89,8 @@ abstract class Model {
 				$classname,
 				static::_getInitialFieldDefs(),
 				static::$_idFieldName,
-				static::$_storeTable
+				static::$_storeTable,
+				static::$_collectionClassname
 			);
 		}
 		return $classname;
@@ -141,7 +142,7 @@ abstract class Model {
 	/**
 	 * @var \ModelLoadConfig the last Config used in a get() or load()
 	 */
-	protected $_lastGetConfig = null;
+	protected $_LastGetConfig = null;
 
 	/**
 	 * read-only access
@@ -192,12 +193,13 @@ abstract class Model {
 		if (!isset($Config->data)) {
 			$Model = new static;
 		}
-		// @todo add registerable case here. old code left comented for sample
-//		elseif (!empty($Config->data) &&
-//			static::$_isRegisterable &&
-//			$Config->registeredInstance &&
-//			$Config->allowLoad &&
-//			($Model = \ModelManager::get(get_called_class(), $Config->data)));
+		// if object is registered, but not loadable, try getting from modelmanager
+		elseif (!empty($Config->data) &&
+			static::$_isRegisterable &&
+			$Config->registeredInstance &&
+			!$Config->allowLoad &&
+			($Model = \ModelManager::get(get_called_class(), $Config->data, true))
+		);
 		// $Config->data is PK value
 		elseif (is_integer($Config->data) || is_string($Config->data)) {
 			debug_print_backtrace(); die('TEST ME1');
@@ -221,7 +223,7 @@ abstract class Model {
 			}
 		}
 
-		$Model->_lastGetConfig = $Config;
+		$Model->_LastGetConfig = $Config;
 
 		return $Model;
 	}
@@ -259,6 +261,8 @@ abstract class Model {
 				return $this->storeTable();
 			case $field === 'isValid':
 				return $this->_isValid;
+			case $field === 'LastGetConfig':
+				return $this->_LastGetConfig;
 			//case $field === 'isLoaded':
 			// magic field value getters
 			case (preg_match(static::FIELD_NAME_PATTERN, $field)):
@@ -446,7 +450,8 @@ abstract class Model {
 			catch (\Exception $e) {};
 		}
 		elseif (is_string($field)) {
-			if (!array_key_exists($field, static::$_fields)) {
+			$classname = get_class($this);
+			if (!\ModelMetaInfo::getField($classname, $field)) {
 				throw new MagicGetException($field, get_class($this));
 			}
 			$ret = null;
@@ -458,7 +463,9 @@ abstract class Model {
 		else {
 			throw new \BadMethodCallException('invalid parameter for getValue, only string and array are valid');
 		}
+
 		return $ret;
+
 	}
 	/**
 	 * unified setter for one value or for array of values. depending on number of params I forward to setValue or
@@ -484,7 +491,8 @@ abstract class Model {
 	 * @return \Model
 	 */
 	protected function _setValue($field, $value) {
-		if (!array_key_exists($field, static::$_fields)) {
+		$classname = get_class($this);
+		if (!array_key_exists($field, \ModelMetaInfo::getField($classname))) {
 			throw new \MagicSetException($field, get_class($this));
 		}
 
@@ -582,13 +590,22 @@ abstract class Model {
 	protected static $_storeRead = 'default';
 	protected static $_storeWrite = 'default';
 
+	public static function Store($storeId, $storeOrStoreName=null) {
+		if (func_num_args() == 2) {
+			return static::_setStore($storeId, $storeOrStoreName);
+		}
+		else {
+			return static::_getStore($storeId);
+		}
+	}
+
 	/**
 	 * I return the associated store object. I get instance from Camarera if necessary
 	 * @param int $storeId
 	 * @throws \InvalidArgumentException
 	 * @return \Store
 	 */
-	public static function getStore($storeId) {
+	protected static function _getStore($storeId) {
 		switch($storeId) {
 			case self::STORE_READ:
 				if (is_string(static::$_storeRead)) {
@@ -603,7 +620,7 @@ abstract class Model {
 				$ret = static::$_storeWrite;
 				break;
 			default:
-				throw new \InvalidArgumentException('Model::getStore(): no such store: ' . print_r($storeId,1));
+				throw new \InvalidArgumentException('Model::Store(): no such store: ' . print_r($storeId,1));
 		}
 		return $ret;
 	}
@@ -614,7 +631,7 @@ abstract class Model {
 	 * @throws \BadMethodCallException
 	 * @throws \InvalidArgumentException
 	 */
-	public static function setStore($storeId, $storeOrStoreName) {
+	protected static function _setStore($storeId, $storeOrStoreName) {
 		if (is_string($storeOrStoreName));
 		elseif (is_object($storeOrStoreName) && is_subclass_of($storeOrStoreName, 'Camarera\Store'));
 		else {
@@ -628,7 +645,7 @@ abstract class Model {
 				static::$_storeWrite = $storeOrStoreName;
 				break;
 			default:
-				throw new \InvalidArgumentException('Model::getStore(): no such store: ' . print_r($storeId,1));
+				throw new \InvalidArgumentException('Model::Store(): no such store: ' . print_r($storeId,1));
 		}
 		return;
 	}
@@ -648,7 +665,7 @@ abstract class Model {
 		if (is_null($LoadConfig)) {
 			$LoadConfig = \ModelLoadConfig::get();
 		}
-		$data = $this->getStore(static::STORE_READ)->loadModel($this, $LoadConfig);
+		$data = $this->_getStore(static::STORE_READ)->loadModel($this, $LoadConfig);
 		if ($data === false) {
 			// @todo
 //			throw new UnImplementedException();
@@ -678,11 +695,11 @@ abstract class Model {
 		}
 		// has id: update
 		if (strlen($this->ID)) {
-			$ret = $this->getStore(static::STORE_WRITE)->updateModel($this, $SaveConfig);
+			$ret = $this->_getStore(static::STORE_WRITE)->updateModel($this, $SaveConfig);
 		}
 		// otherwise, insert
 		else {
-			$ret = $this->getStore(static::STORE_WRITE)->createModel($this, $SaveConfig);
+			$ret = $this->_sgetStore(static::STORE_WRITE)->createModel($this, $SaveConfig);
 		}
 		if ($ret === false) {
 			// @todo
@@ -707,7 +724,7 @@ abstract class Model {
 		if (empty($id)) {
 			throw new \RuntimeException('cannot delete ' . get_class($this) . ' object without ID');
 		}
-		$ret = $this->getStore(static::STORE_WRITE)->deleteModel($this, $DeleteConfig);
+		$ret = $this->_getStore(static::STORE_WRITE)->deleteModel($this, $DeleteConfig);
 		return $ret ? true : false;
 	}
 
@@ -722,30 +739,76 @@ abstract class Model {
 	public function validate() {
 		$this->_isValid = true;
 		$this->_validationErrors = array();
+		$uniqueChecks = array();
 		$validationErrors = array();
-		foreach (static::$_fields as $eachFieldName=>$EachField) {
+		$classname = get_class($this);
+		$fields = \ModelMetaInfo::getField($classname);
+		foreach ($fields as $eachFieldName=>$EachField) {
 			try {
+				if ($EachField->unique) {
+					$uniqueChecks[] = $eachFieldName;
+				}
+				if ($EachField->uniqueWith) {
+					$check = array($eachFieldName, $EachField->uniqueWith);
+					if (!in_array($check, $uniqueChecks)) {
+						$uniqueChecks[] = $check;
+					}
+				}
 				$value = array_key_exists($eachFieldName, $this->_values)
 					? $this->_values[$eachFieldName]
 					: null;
 				$errors = $EachField->validate($value, $this);
 				if (!empty($errors)) {
-					$validationErrors[$eachFieldName] = array_merge_recursive(
-							$this->_validationErrors,
-							$errors
-					);
+					$validationErrors[$eachFieldName] = $errors;
 				}
 			}
 			catch (\FieldValidationException $e) {
 				$validationErrors[$eachFieldName][] = $e->getMessage();
 			}
 		}
+
+		// unique checks
+
 		if (count($validationErrors)) {
 			$this->_isValid = false;
 			$this->_validationErrors = $validationErrors;
 			#echop($validationErrors); die('HUBU');
 		}
 		return $this;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	// MORE
+	//////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * @var string name of class which contains these objects. Leave empty for autoguess or fill to speed up a bit.
+	 */
+	protected static $_collectionClassname = null;
+
+	/**
+	 * I return an empty collection which can handle these models. I guess the classname by:
+	 * 			static::$_collectionClassname
+	 * 			{__CLASS__}Collection
+	 * 			Collection
+	 * 		in this order. If $_collectionClassname is set, it must be valid as it is not checked. If {__CLASS__}Collection
+	 * 		does not exists, Collection will be used with the proper ModelClassname set
+	 */
+	public static function collectionClassname() {
+		$classname = static::_inflate();
+		return \ModelMetaInfo::getCollectionClassname($classname);
+	}
+
+	/**
+	 * @return Collection I return a CollectionXxx instance which holds these models
+	 */
+	public static function collection(\CollectionGetConfig $Config=null) {
+		$classname = static::_inflate();
+		$collectionClassname = \ModelMetaInfo::getCollectionClassname($classname);
+//		$Collection = $collectionClassname::serve();
+		$Collection = $collectionClassname::get($Config);
+		$Collection->setModelClassname($classname);
+		return $Collection;
 	}
 
 }

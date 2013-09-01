@@ -22,19 +22,25 @@ namespace Camarera;
  * I hold options for Model get/load
  * @author t
  * @package Camarera\Model
- * @version 1.01
+ * @version 1.1
+ *
+ * @method $this setLoadFields(string|array|null $fields)
+ * @method $this setAllowLoad(bool $allowLoad)
+ * @method $this setLoadOrder($loadOrder)
+ * @method $this setRegisteredInstance(bool $registeredInstance)
+ * @method $this setData(array $data)
  */
 class ModelLoadConfig extends \Config implements \Camarera\StoreMethodConfig {
 
 	/**
-	 * @var string|array only these fields will be loaded, may be '*' or array of fieldnames
+	 * @var string|array only these fields will be loaded, may be null or array of fieldnames
 	 */
-	public $loadFields = '*';
+	public $loadFields;
 
 	/**
 	 * @var boolean if false, stores will not be used to get the object (but manager will be, if available)
 	 */
-	public $allowLoad = true;
+	public $allowLoad = false;
 
 	/**
 	 * @var null|string|array[string]string load order.

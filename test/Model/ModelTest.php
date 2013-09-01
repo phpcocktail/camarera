@@ -1,4 +1,20 @@
 <?php
+/**
+ * Copyright © 2013 t
+ * This work is free. You can redistribute it and/or modify it under the
+ * terms of the Do What The Fuck You Want To Public License, Version 2,
+ * as published by Sam Hocevar. See the COPYING file for more details.
+ *
+ * This program is free software. It comes without any warranty, to
+ * the extent permitted by applicable law. You can redistribute it
+ * and/or modify it under the terms of the Do What The Fuck You Want
+ * To Public License, Version 2, as published by Sam Hocevar. See
+ * http://www.wtfpl.net/ for more details.
+ *
+ * @author t
+ * @license DWTFYWT
+ * @version 1.1
+ */
 
 require_once(realpath(dirname(__FILE__) . '/../../vendor') . '/autoload.php');
 require_once('classes/TraitTestModel.php');
@@ -31,6 +47,8 @@ class ModelTest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals('TestModelA', $classname);
 		// shouldn't call ModelMetaInfo again, that would throw an exception actually
 		TestModelA::_inflate();
+		$fields = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_fields');
+		$this->assertInstanceOf('\Field', reset($fields['TestModelA']));
 	}
 
 	/**
@@ -74,10 +92,12 @@ class ModelTest extends PHPUnit_Framework_TestCase {
 	 */
 	function testServe() {
 
+		// serve empty
 		$M = TestModelA::serve();
 		$this->assertEquals(array(), PHPUnit_Framework_Assert::readAttribute($M, '_values'));
 		$this->assertEquals(array(), PHPUnit_Framework_Assert::readAttribute($M, '_storedValues'));
 
+		// serve by values
 		$values = array(
 			'x1' => 2,
 			's1' => 'asdf',
@@ -85,6 +105,33 @@ class ModelTest extends PHPUnit_Framework_TestCase {
 		$M = TestModelA::serve($values);
 		$this->assertEquals($values, PHPUnit_Framework_Assert::readAttribute($M, '_values'));
 		$this->assertEquals(array(), PHPUnit_Framework_Assert::readAttribute($M, '_storedValues'));
+		$this->assertFalse($M->LastGetConfig->allowLoad);
+
+		$M->_id = 1;
+		$M->registerInstance();
+
+		// serve(1) should load only if registerable
+		$M2 = TestModelA::serve(1);
+		$this->assertTrue($M === $M2);
+		$this->assertFalse($M2->LastGetConfig->allowLoad);
+
+		// load with data not in manager
+		$Config = \ModelLoadConfig::serve()
+			->setData(array('x1'=>1,'s1'=>'asdf'));
+		$M = TestModelA::serve($Config);
+		$this->assertEquals(null, $M->ID);
+
+		// load with data in manager
+		$Config = \ModelLoadConfig::serve()
+			->setData($values);
+		$M = TestModelA::serve($Config);
+		$this->assertEquals('1', $M->ID);
+
+		$Config = \ModelLoadConfig::serve()
+			->setData($values)
+			->setRegisteredInstance(false);
+		$M = TestModelA::serve($Config);
+		$this->assertEquals(null, $M->ID);
 
 		$this->markTestIncomplete();
 

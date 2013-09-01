@@ -1,4 +1,20 @@
 <?php
+/**
+ * Copyright © 2013 t
+ * This work is free. You can redistribute it and/or modify it under the
+ * terms of the Do What The Fuck You Want To Public License, Version 2,
+ * as published by Sam Hocevar. See the COPYING file for more details.
+ *
+ * This program is free software. It comes without any warranty, to
+ * the extent permitted by applicable law. You can redistribute it
+ * and/or modify it under the terms of the Do What The Fuck You Want
+ * To Public License, Version 2, as published by Sam Hocevar. See
+ * http://www.wtfpl.net/ for more details.
+ *
+ * @author t
+ * @license DWTFYWT
+ * @version 1.1
+ */
 
 require_once(realpath(dirname(__FILE__) . '/../../vendor') . '/autoload.php');
 require_once('classes/TraitTestModel.php');
@@ -11,6 +27,7 @@ use \Camarera\ModelMetaInfo;
 class Foo extends \Model {};
 class FooBar extends \Model {};
 class FooDamnBar extends \Model {};
+class FooBarCollection {};
 
 /**
  * Class ModelMetaInfoTest
@@ -130,6 +147,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			$classname,
 			$fields,
 			null,
+			null,
 			null
 		);
 
@@ -137,6 +155,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			ModelMetaInfo::inflate(
 				$classname,
 				$fields,
+				null,
 				null,
 				null
 			);
@@ -157,6 +176,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			ModelMetaInfo::inflate(
 				'Foo',
 				$fields,
+				null,
 				null,
 				null
 			);
@@ -224,6 +244,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			'Foo',
 			$fields,
 			array('x1','x2','x3','x4'),
+			null,
 			null
 		);
 		$this->assertTrue(false);
@@ -246,7 +267,8 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			$classname,
 			$fields,
 			null,
-			'FooBarTable'
+			'FooBarTable',
+			null
 		);
 		$values = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_idFieldNames');
 		$this->assertEquals('_id', $values[$classname]);
@@ -264,11 +286,35 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			$classname,
 			$fields,
 			array('x1','x2'),
+			null,
 			null
 		);
 		$values = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_idFieldNames');
 		$this->assertEquals(array('x1','x2'), $values[$classname]);
 		$values = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_storeTables');
 		$this->assertEquals('foo_damn_bar', $values[$classname]);
+	}
+
+	/**
+	 * @covers ModelMetaInfo::getCollectionClassname
+	 */
+	function testGetCollectionClassname() {
+		$classname = 'FooBar';
+		$fields = array(
+			'x1' => array(
+				'classname' => '\Field',
+			),
+			'x2',
+			's1',
+			's2'
+		);
+		ModelMetaInfo::inflate(
+			$classname,
+			$fields,
+			null,
+			'FooBarTable',
+			null
+		);
+		$this->assertEquals('FooBarCollection', ModelMetaInfo::getCollectionClassname($classname));
 	}
 }
