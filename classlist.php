@@ -19,7 +19,7 @@ die('This file is not intended to be run.');
 class AutoloaderNamespaceAliaser extends Camarera\AutoloaderNamespaceAliaser {};
 
 /**
- * root namespace alias for IDEs 
+ * root namespace alias for IDEs
  */
 class FielValidatorMinlength extends Cocktail\FielValidatorMinlength {};
 
@@ -134,7 +134,7 @@ class StoreSqlSqlite3Config extends Camarera\StoreSqlSqlite3Config {};
  * @license DWTFYWT
  * @package Camarera\Store
  * @version 1.1
- * 
+ *
  * @property-read string $id internal ID of the store, in case you use more than one store you can refer them by this ID
  */
 abstract class StoreConfig extends Camarera\StoreConfig {};
@@ -219,7 +219,7 @@ class StoreSqlSqlite3 extends Camarera\StoreSqlSqlite3 {};
 class ModelDeleteConfig extends Camarera\ModelDeleteConfig {};
 
 /**
- * ModelMetaInfo is an info registry about Model metadata
+ * ModelInfoManager is an info registry about Model metadata
  * @todo after initial development, check if extending the Model class is still needed??? (for accessing protected data)
  *
  * @author t
@@ -228,7 +228,7 @@ class ModelDeleteConfig extends Camarera\ModelDeleteConfig {};
  * @version 1.1
  *
  */
-class ModelMetaInfo extends Camarera\ModelMetaInfo {};
+class ModelInfoManager extends Camarera\ModelInfoManager {};
 
 /**
  * Model is the base class which your own classes should extend to form your models. This class has the base
@@ -258,12 +258,12 @@ class ModelMetaInfo extends Camarera\ModelMetaInfo {};
 abstract class Model extends Camarera\Model {};
 
 /**
- * root namespace alias for IDEs 
+ * root namespace alias for IDEs
  */
 class FieldValidationException extends Camarera\FieldValidationException {};
 
 /**
- * root namespace alias for IDEs 
+ * root namespace alias for IDEs
  */
 class ModelValidationException extends Camarera\ModelValidationException {};
 
@@ -294,7 +294,7 @@ class ModelLoadConfig extends Camarera\ModelLoadConfig {};
  * @package Camarera\Model
  * @version 1.01
  */
-class ModelManager extends Camarera\ModelManager {};
+class ModelInstanceManager extends Camarera\ModelInstanceManager {};
 
 /**
  * CollectionBuilder it is yet a draft of a class which would take lot of responsibility from Collection, usually functions
@@ -398,7 +398,7 @@ class LoggerAppend extends Camarera\LoggerAppend {};
 abstract class Config extends Camarera\Config {};
 
 /**
- * root namespace alias for IDEs 
+ * root namespace alias for IDEs
  */
 class ConfigException extends Camarera\ConfigException {};
 

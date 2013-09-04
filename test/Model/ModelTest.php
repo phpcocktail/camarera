@@ -20,7 +20,7 @@ require_once(realpath(dirname(__FILE__) . '/../../vendor') . '/autoload.php');
 require_once('classes/TraitTestModel.php');
 require_once('classes/TestModelA.class.php');
 
-use \Camarera\ModelMetaInfo;
+use \Camarera\ModelInfoManager;
 
 /**
  * Class ModelTest
@@ -41,13 +41,13 @@ class ModelTest extends PHPUnit_Framework_TestCase {
 	 * @covers Model::_inflate
 	 */
 	function testInflate() {
-		$this->assertFalse(\Camarera\ModelMetaInfo::isInflated('TestModelA'));
+		$this->assertFalse(\Camarera\ModelInfoManager::isInflated('TestModelA'));
 		$classname = TestModelA::_inflate();
-		$this->assertTrue(\Camarera\ModelMetaInfo::isInflated('TestModelA'));
+		$this->assertTrue(\Camarera\ModelInfoManager::isInflated('TestModelA'));
 		$this->assertEquals('TestModelA', $classname);
-		// shouldn't call ModelMetaInfo again, that would throw an exception actually
+		// shouldn't call ModelInfoManager again, that would throw an exception actually
 		TestModelA::_inflate();
-		$fields = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_fields');
+		$fields = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_fields');
 		$this->assertInstanceOf('\Field', reset($fields['TestModelA']));
 	}
 
@@ -138,6 +138,9 @@ class ModelTest extends PHPUnit_Framework_TestCase {
 	}
 
 	function test__call() {
+
+
+
 		$this->markTestIncomplete();
 	}
 

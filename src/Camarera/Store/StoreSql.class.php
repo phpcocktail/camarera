@@ -373,7 +373,7 @@ abstract class StoreSql extends \Store {
 		return $ret;
 	}
 
-	protected function _loadCollectionGetWhere(Collection $Collection, CollectionGetConfig $LoadConfig) {
+	protected function _loadCollectionGetWhere(Collection $Collection, CollectionLoadConfig $LoadConfig) {
 		if (empty($LoadConfig->filter)) {
 			$ret = ' 1 ';
 		}
@@ -383,7 +383,7 @@ abstract class StoreSql extends \Store {
 		}
 		return $ret;
 	}
-	protected function _loadCollectionGetOrder(Collection $Collection, CollectionGetConfig $LoadConfig) {
+	protected function _loadCollectionGetOrder(Collection $Collection, CollectionLoadConfig $LoadConfig) {
 		if (!empty($LoadConfig->loadOrder)) {
 			$order = is_array($LoadConfig->loadOrder) ? implode(',', $LoadConfig->loadOrder) : $LoadConfig->loadOrder;
 			$ret = ' ORDER BY ' . $order;
@@ -393,7 +393,7 @@ abstract class StoreSql extends \Store {
 		}
 		return $ret;
 	}
-	protected function _loadCollectionGetLimitOffset(Collection $Collection, CollectionGetConfig $LoadConfig) {
+	protected function _loadCollectionGetLimitOffset(Collection $Collection, CollectionLoadConfig $LoadConfig) {
 		$limit = isset($LoadConfig->loadLimit) ? $LoadConfig->loadLimit : null;
 		$offset = isset($LoadConfig->loadOffset) ? $LoadConfig->loadOffset : null;
 		$ret = '';

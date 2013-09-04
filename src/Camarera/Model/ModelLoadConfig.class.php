@@ -51,7 +51,7 @@ class ModelLoadConfig extends \Config implements \Camarera\StoreMethodConfig {
 	public $loadOrder = null;
 
 	/**
-	 * @var boolean controls whether ModelManager shall be used to get object/data or forced load shall happen
+	 * @var boolean controls whether ModelInstanceManager shall be used to get object/data or forced load shall happen
 	 */
 	public $registeredInstance = true;
 

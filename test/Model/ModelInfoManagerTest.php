@@ -21,7 +21,7 @@ require_once('classes/TraitTestModel.php');
 require_once('classes/TestModelA.class.php');
 require_once('classes/TestModelB.class.php');
 
-use \Camarera\ModelMetaInfo;
+use \Camarera\ModelInfoManager;
 
 // some test classes. Notice they come without field def, because that is provided programatically within each test
 class Foo extends \Model {};
@@ -30,30 +30,30 @@ class FooDamnBar extends \Model {};
 class FooBarCollection {};
 
 /**
- * Class ModelMetaInfoTest
+ * Class ModelInfoManagerTest
  * @runTestsInSeparateProcesses
  */
-class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
+class ModelInfoManagerTest extends PHPUnit_Framework_TestCase {
 
 	/**
-	 * @covers ModelMetaInfo::isInflated
+	 * @covers ModelInfoManager::isInflated
 	 */
 	function testIsInflated() {
 		$classname = 'TestModelA';
-		$this->assertFalse(ModelMetaInfo::isInflated($classname));
+		$this->assertFalse(ModelInfoManager::isInflated($classname));
 		$this->assertNotContains(
 			$classname,
-			array_keys(PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_inflatedClassnames'))
+			array_keys(PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_inflatedClassnames'))
 		);
 		$classname::serve();
-		$this->assertTrue(ModelMetaInfo::isInflated($classname));
-		$inflatedClasses = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_inflatedClassnames');
+		$this->assertTrue(ModelInfoManager::isInflated($classname));
+		$inflatedClasses = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_inflatedClassnames');
 		$this->assertTrue($inflatedClasses[$classname]);
 	}
 
 	/**
 	 * @expectedException \RuntimeException
-	 * @covers ModelMetaInfo::getField
+	 * @covers ModelInfoManager::getField
 	 */
 	function testGetField() {
 
@@ -62,7 +62,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 		$classname::serve();
 
 		// get one field
-		$Field = ModelMetaInfo::getField($classname, 'x1');
+		$Field = ModelInfoManager::getField($classname, 'x1');
 		$this->assertTrue($Field instanceof \FieldInteger);
 		$this->assertEquals(
 			'x1',
@@ -70,7 +70,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 		);
 
 		// get all fields
-		$Fields = ModelMetaInfo::getField($classname);
+		$Fields = ModelInfoManager::getField($classname);
 		$this->assertTrue(is_array($Fields));
 		$this->assertEquals(
 			$classname::$fieldNames,
@@ -78,7 +78,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 		);
 
 		// get some fields
-		$Fields = ModelMetaInfo::getField($classname, array('x1','x2'));
+		$Fields = ModelInfoManager::getField($classname, array('x1','x2'));
 		$this->assertTrue(is_array($Fields));
 		$this->assertEquals(
 			array('x1','x2'),
@@ -86,64 +86,64 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 		);
 
 		// wrong fieldname
-		$this->assertNull(ModelMetaInfo::getField($classname, 'asd'));
+		$this->assertNull(ModelInfoManager::getField($classname, 'asd'));
 
 		try {
-			ModelMetaInfo::getField($classname, array());
+			ModelInfoManager::getField($classname, array());
 			$this->assertTrue(false);
 		}
 		catch (\InvalidArgumentException $e) {}
 
-		ModelMetaInfo::getField('Foo');
+		ModelInfoManager::getField('Foo');
 	}
 
 	/**
 	 * @expectedException \RuntimeException
-	 * @covers ModelMetaInfo::getIdFieldName
+	 * @covers ModelInfoManager::getIdFieldName
 	 */
 	function testGetIdFieldname() {
 
 		// string ID
 		$classname = 'TestModelA';
 		$classname::serve();
-		$this->assertEquals('_id', ModelMetaInfo::getIdFieldname($classname));
+		$this->assertEquals('_id', ModelInfoManager::getIdFieldname($classname));
 
 		// array of fields ID
 		$classname = 'TestModelB';
 		$classname::serve();
-		$this->assertEquals(array('s1','x1'), ModelMetaInfo::getIdFieldname($classname));
+		$this->assertEquals(array('s1','x1'), ModelInfoManager::getIdFieldname($classname));
 
 		// non existing class: should throw
 		$classname = 'TestModelFoo';
-		ModelMetaInfo::getIdFieldname($classname);
+		ModelInfoManager::getIdFieldname($classname);
 
 	}
 
 	/**
 	 * @expectedException \RuntimeException
-	 * @covers ModelMetaInfo::getStoreTable
+	 * @covers ModelInfoManager::getStoreTable
 	 */
 	function testGetStoreTable() {
 
 		$classname = 'TestModelA';
 		$classname::serve();
-		$this->assertEquals('test_model_a', ModelMetaInfo::getStoreTable($classname));
+		$this->assertEquals('test_model_a', ModelInfoManager::getStoreTable($classname));
 
 		// non existing class: should throw
 		$classname = 'TestModelFoo';
-		ModelMetaInfo::getStoreTable($classname);
+		ModelInfoManager::getStoreTable($classname);
 
 	}
 
 	/**
-	 * @covers ModelMetaInfo::inflate
+	 * @covers ModelInfoManager::inflate
 	 */
 	function testInflatedAlreadyException() {
 
 		$classname = 'Foo';
 		$fields = array('x1','x2','s1','s2');
 
-		ModelMetaInfo::inflate(
+		ModelInfoManager::inflate(
 			$classname,
 			$fields,
 			null,
@@ -152,7 +152,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 		);
 
 		try {
-			ModelMetaInfo::inflate(
+			ModelInfoManager::inflate(
 				$classname,
 				$fields,
 				null,
@@ -169,11 +169,11 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 
 	/**
 	 * @dataProvider inflateExceptionsProvider
-	 * @covers ModelMetaInfo::inflate
+	 * @covers ModelInfoManager::inflate
 	 */
 	function testInflateExceptions($fields, $exceptionClassname, $exceptionMessage) {
 		try {
-			ModelMetaInfo::inflate(
+			ModelInfoManager::inflate(
 				'Foo',
 				$fields,
 				null,
@@ -236,11 +236,11 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 	/**
 	 * @expectedException \ClassDefinitionException
 	 * @expectedExceptionMessage x3,x4 are ID fields but
-	 * @covers ModelMetaInfo::inflate
+	 * @covers ModelInfoManager::inflate
 	 */
 	function testInflateIdfieldException() {
 		$fields = array('x1','x2','s1','s2');
-		ModelMetaInfo::inflate(
+		ModelInfoManager::inflate(
 			'Foo',
 			$fields,
 			array('x1','x2','x3','x4'),
@@ -251,7 +251,7 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 	}
 
 	/**
-	 * @covers ModelMetaInfo::inflate
+	 * @covers ModelInfoManager::inflate
 	 */
 	function testInflate() {
 		$classname = 'FooBar';
@@ -263,16 +263,16 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			's1',
 			's2'
 		);
-		ModelMetaInfo::inflate(
+		ModelInfoManager::inflate(
 			$classname,
 			$fields,
 			null,
 			'FooBarTable',
 			null
 		);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_idFieldNames');
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_idFieldNames');
 		$this->assertEquals('_id', $values[$classname]);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_storeTables');
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_storeTables');
 		$this->assertEquals('FooBarTable', $values[$classname]);
 
 		$classname = 'FooDamnBar';
@@ -282,21 +282,21 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			's1',
 			's2'
 		);
-		ModelMetaInfo::inflate(
+		ModelInfoManager::inflate(
 			$classname,
 			$fields,
 			array('x1','x2'),
 			null,
 			null
 		);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_idFieldNames');
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_idFieldNames');
 		$this->assertEquals(array('x1','x2'), $values[$classname]);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelMetaInfo', '_storeTables');
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_storeTables');
 		$this->assertEquals('foo_damn_bar', $values[$classname]);
 	}
 
 	/**
-	 * @covers ModelMetaInfo::getCollectionClassname
+	 * @covers ModelInfoManager::getCollectionClassname
 	 */
 	function testGetCollectionClassname() {
 		$classname = 'FooBar';
@@ -308,13 +308,13 @@ class ModelMetaInfoTest extends PHPUnit_Framework_TestCase {
 			's1',
 			's2'
 		);
-		ModelMetaInfo::inflate(
+		ModelInfoManager::inflate(
 			$classname,
 			$fields,
 			null,
 			'FooBarTable',
 			null
 		);
-		$this->assertEquals('FooBarCollection', ModelMetaInfo::getCollectionClassname($classname));
+		$this->assertEquals('FooBarCollection', ModelInfoManager::getCollectionClassname($classname));
 	}
 }

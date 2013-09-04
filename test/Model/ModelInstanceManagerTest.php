@@ -20,18 +20,18 @@ require_once(realpath(dirname(__FILE__) . '/../../vendor') . '/autoload.php');
 require_once('classes/TraitTestModel.php');
 require_once('classes/TestModelA.class.php');
 
-use \Camarera\ModelMetaInfo;
-use \Camarera\ModelManager;
+use \Camarera\ModelInfoManager;
+use \Camarera\ModelInstanceManager;
 
 /**
- * Class ModelManagerTest
+ * Class ModelInstanceManagerTest
  * @runTestsInSeparateProcesses
  */
-class ModelManagerTest extends PHPUnit_Framework_TestCase {
+class ModelInstanceManagerTest extends PHPUnit_Framework_TestCase {
 
 	/**
-	 * @covers ModelManager::get
-	 * @covers ModelManager::set
+	 * @covers ModelInstanceManager::get
+	 * @covers ModelInstanceManager::set
 	 */
 	function testGetSet() {
 		$classname = 'TestModelA';
@@ -40,11 +40,11 @@ class ModelManagerTest extends PHPUnit_Framework_TestCase {
 			'x1' => 10,
 			's1' => 'a',
 		);
-		ModelManager::set($classname, $data);
-		$registry = PHPUnit_Framework_Assert::readAttribute('ModelManager', '_registry');
+		ModelInstanceManager::set($classname, $data);
+		$registry = PHPUnit_Framework_Assert::readAttribute('ModelInstanceManager', '_registry');
 		$this->assertEquals($data, $registry[$classname][1]);
-		$this->assertEquals($data, ModelManager::get($classname, 1, false));
-		$M = ModelManager::get($classname, 1);
+		$this->assertEquals($data, ModelInstanceManager::get($classname, 1, false));
+		$M = ModelInstanceManager::get($classname, 1);
 		$this->assertInstanceOf('\TestModelA', $M);
 
 		$data2 = array(
@@ -52,10 +52,10 @@ class ModelManagerTest extends PHPUnit_Framework_TestCase {
 			'x1' => 20,
 			's1' => 'b',
 		);
-		ModelManager::set($classname, $data2, 2);
-		$registry = PHPUnit_Framework_Assert::readAttribute('ModelManager', '_registry');
+		ModelInstanceManager::set($classname, $data2, 2);
+		$registry = PHPUnit_Framework_Assert::readAttribute('ModelInstanceManager', '_registry');
 		$this->assertEquals($data2, $registry['TestModelA'][2]);
-		$this->assertEquals($data2, ModelManager::get($classname, 2, false));
+		$this->assertEquals($data2, ModelInstanceManager::get($classname, 2, false));
 
 		$data3 = array(
 			'_id' => 3,
@@ -63,53 +63,53 @@ class ModelManagerTest extends PHPUnit_Framework_TestCase {
 			's1' => 'c',
 		);
 		$M = TestModelA::serve($data3);
-		ModelManager::set($classname, $M, 3);
-		$this->assertEquals($M, ModelManager::get($classname, 3));
+		ModelInstanceManager::set($classname, $M, 3);
+		$this->assertEquals($M, ModelInstanceManager::get($classname, 3));
 
 		$data4 = array(
 			'_id' => 4,
 			'x1' => 40,
 			's1' => 'd',
 		);
-		ModelManager::set($classname, $data4);
+		ModelInstanceManager::set($classname, $data4);
 		$findData = array('x1'=>40, 's1'=>'d');
-		$this->assertEquals($data4, ModelManager::get($classname, $findData, false));
+		$this->assertEquals($data4, ModelInstanceManager::get($classname, $findData, false));
 
-		ModelManager::get($classname, 4);
-		$this->assertEquals($data4, ModelManager::get($classname, $findData, false));
+		ModelInstanceManager::get($classname, 4);
+		$this->assertEquals($data4, ModelInstanceManager::get($classname, $findData, false));
 
 	}
 
 	/**
-	 * @covers ModelManager::get
+	 * @covers ModelInstanceManager::get
 	 * @expectedException BadMethodCallException
 	 */
 	function testGetException1() {
 		$classname = 'TestModelA';
-		ModelManager::get($classname, array());
+		ModelInstanceManager::get($classname, array());
 	}
 
 	/**
-	 * @covers ModelManager::set
+	 * @covers ModelInstanceManager::set
 	 * @expectedException InvalidArgumentException
 	 */
 	function testSetException1() {
 		$classname = 'stdClass';
 		$M = new stdClass();
-		ModelManager::set($classname, $M);
+		ModelInstanceManager::set($classname, $M);
 	}
 
 	/**
-	 * @covers ModelManager::set
+	 * @covers ModelInstanceManager::set
 	 * @expectedException InvalidArgumentException
 	 */
 	function testSetException2() {
 		$classname = 'TestModelA';
-		ModelManager::set($classname, null);
+		ModelInstanceManager::set($classname, null);
 	}
 
 	/**
-	 * @covers ModelManager::set
+	 * @covers ModelInstanceManager::set
 	 * @expectedException InvalidArgumentException
 	 */
 	function testSetException3() {
@@ -118,12 +118,12 @@ class ModelManagerTest extends PHPUnit_Framework_TestCase {
 			'x1' => 10,
 			's1' => 'a',
 		);
-		ModelManager::set($classname, $data);
+		ModelInstanceManager::set($classname, $data);
 	}
 
 	/**
-	 * @covers ModelManager::getObject
-	 * @covers ModelManager::getData
+	 * @covers ModelInstanceManager::getObject
+	 * @covers ModelInstanceManager::getData
 	 */
 	function testGetDataGetObject() {
 		$classname = 'TestModelA';
@@ -132,21 +132,21 @@ class ModelManagerTest extends PHPUnit_Framework_TestCase {
 			'x1' => 10,
 			's1' => 'a',
 		);
-		ModelManager::set($classname, $data);
-		$registry = PHPUnit_Framework_Assert::readAttribute('ModelManager', '_registry');
+		ModelInstanceManager::set($classname, $data);
+		$registry = PHPUnit_Framework_Assert::readAttribute('ModelInstanceManager', '_registry');
 		$this->assertEquals($data, $registry[$classname][1]);
-		$this->assertEquals($data, ModelManager::getData($classname, 1));
+		$this->assertEquals($data, ModelInstanceManager::getData($classname, 1));
 
-		$M = ModelManager::getObject($classname, 1);
+		$M = ModelInstanceManager::getObject($classname, 1);
 		$this->assertInstanceOf($classname, $M);
 		$this->assertEquals(1, $M->ID);
-		$registry = PHPUnit_Framework_Assert::readAttribute('ModelManager', '_registry');
+		$registry = PHPUnit_Framework_Assert::readAttribute('ModelInstanceManager', '_registry');
 		$this->assertEquals($M, $registry[$classname][1]);
 
-		$M = ModelManager::getObject($classname, 1);
+		$M = ModelInstanceManager::getObject($classname, 1);
 		$this->assertInstanceOf($classname, $M);
 
-		$this->assertEquals($data, ModelManager::getData($classname, 1));
+		$this->assertEquals($data, ModelInstanceManager::getData($classname, 1));
 	}
 
 }

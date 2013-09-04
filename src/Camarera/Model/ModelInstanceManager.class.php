@@ -29,7 +29,7 @@ namespace Camarera;
  * @package Camarera\Model
  * @version 1.01
  */
-class ModelManager {
+class ModelInstanceManager {
 
 	/**
 	 * @var array[string](array|object) the main data registry, holds either data of the given object only (for lazy

@@ -40,11 +40,18 @@ class Collection implements \Iterator, \Countable {
 	 */
 	//protected $_registeredInstances = true;
 
+	/**
+	 * @var string|\Store name or reference of store used for reads. Define this var in your class if you want to overwrite
+	 * 		as there is no setter
+	 */
 	protected static $_storeRead = 'default';
+	/**
+	 * @var string|\Store
+	 */
 	protected static $_storeWrite = 'default';
 
 	/**
-	 * @var CollectionXxxGetConfig|CollectionGetConfig|null this holds the Collection load extra params after get() is called
+	 * @var CollectionXxxGetConfig|CollectionLoadConfig|null this holds the Collection load extra params after get() is called
 	 * @todo implement
 	 */
 	protected $_GetConfig = null;
@@ -65,6 +72,11 @@ class Collection implements \Iterator, \Countable {
 		// @todo
 	}
 
+	/**
+	 * I return the associated ModelXxx classname. I autoguess if not set in class declaration or by setModelClassname()
+	 * @return null|string
+	 * @throws \ClassDefinitionException
+	 */
 	public static function getModelClassname() {
 		if (is_null(static::$_modelClassname)) {
 			$classname = get_called_class();
@@ -78,9 +90,16 @@ class Collection implements \Iterator, \Countable {
 		}
 		return static::$_modelClassname;
 	}
+	/**
+	 * I set associated ModelXxx classname
+	 * @param $modelClassname
+	 */
+	public static function setModelClassname($modelClassname) {
+		static::$_modelClassname = $modelClassname;
+	}
 
 	/**
-	 * @param CollectionGetConfig|array|null $Config - use it to configure Collection instance
+	 * @param CollectionLoadConfig|array|null $Config - use it to configure Collection instance
 	 * @param array $datas to directly send datas. If you send datas no load will occur automaticly
 	 * @return \Collection
 	 */
@@ -97,12 +116,12 @@ class Collection implements \Iterator, \Countable {
 		}
 
 		if (is_null($itemsOrFilterOrConfig)) {
-			$Config = \CollectionGetConfig::get(array(
+			$Config = \CollectionGetConfig::serve(array(
 					'allowLoad' => false,
 			));
 		}
 		elseif (is_array($itemsOrFilterOrConfig)) {
-			$Config = \CollectionGetConfig::get(array(
+			$Config = \CollectionGetConfig::serve(array(
 					'datas' => $itemsOrFilterOrConfig,
 			));
 		}
@@ -186,7 +205,7 @@ class Collection implements \Iterator, \Countable {
 
 	/**
 	 * I set the last used get config and over what would be needed normally
-	 * @param CollectionGetConfig $Config
+	 * @param CollectionLoadConfig $Config
 	 * @return \Collection
 	 */
 	protected function _setGetConfig(\CollectionGetConfig $Config) {
@@ -225,32 +244,50 @@ class Collection implements \Iterator, \Countable {
 	// STORE
 	//////////////////////////////////////////////////////////////////////////
 
+	public static function Store($storeKey, $storeOrStoreId=null) {
+		if (func_num_args() == 2) {
+			return static::_setStore($storeKey, $storeOrStoreId);
+		}
+		else {
+			return static::_getStore($storeKey);
+		}
+	}
+
 	/**
 	 * I return read or write store and instanciate if necessary (for the first
 	 * 		call it will only contain identifier of store, so always use this
 	 *		method to get Model's store)
-	 * @param int $storeId ModelConfig::STORE_READ or ModelConfig::STORE_WRITE, null defaults to STORE_READ
+	 * @param int $storeKey ModelConfig::STORE_READ or ModelConfig::STORE_WRITE, null defaults to STORE_READ
 	 * @throws \InvalidArgumentException
 	 * @return \Store
 	 */
-	function getStore($storeId=null) {
-		switch($storeId) {
+	protected static function _getStore($storeKey) {
+		switch ($storeKey) {
 			case \Model::STORE_READ:
-			case null:
-				if (is_string(self::$_storeRead)) {
-					self::$_storeRead = \Camarera::getStore(self::$_storeRead);
+				if (is_string(static::$_storeRead)) {
+					static::$_storeRead = \Camarera::getStore(static::$_storeRead);
 				}
-				return self::$_storeRead;
-				// nobreak
+				return static::$_storeRead;
 			case \Model::STORE_WRITE:
-				if (is_string(self::$_storeWrite)) {
-					self::$_storeWrite = \Camarera::getStore(self::$_storeWrite);
+				if (is_string(static::$_storeWrite)) {
+					static::$_storeWrite = \Camarera::getStore(static::$_storeWrite);
 				}
-				return self::$_storeWrite;
-				// nobreak
+				return static::$_storeWrite;
 			default:
-				throw new \InvalidArgumentException('Model::getStore(): no such store: ' . print_r($storeId,1));
+				throw new \InvalidArgumentException('Model::getStore(): no such store: ' . print_r($storeKey,1));
 		}
+	}
+	protected static function _setStore($storeKey, $StoreOrStoreId) {
+		switch ($storeKey) {
+			case \Model::STORE_READ:
+				static::$_storeRead = $StoreOrStoreId;
+				break;
+			case \Model::STORE_WRITE:
+				static::$_storeWrite = $StoreOrStoreId;
+				break;
+			default:
+				throw new \InvalidArgumentException('Model::setStore(): no such store: ' . print_r($storeKey,1));
+		};
 	}
 	/**
 	 * @return string I return the actual model's storetable (remember: without prefix, prefix belongs to store)
@@ -259,7 +296,6 @@ class Collection implements \Iterator, \Countable {
 		$ModelClassname = static::getModelClassname();
 		return $ModelClassname::getStoreTable();
 	}
-
 
 	//////////////////////////////////////////////////////////////////////////
 	// DATAS
@@ -307,7 +343,7 @@ class Collection implements \Iterator, \Countable {
 				$this->_instances[$eachId] = true;
 			}
 			if (is_array($eachData)) {
-				\ModelManager::set($modelClassname, $eachData, $eachId);
+				\ModelInstanceManager::set($modelClassname, $eachData, $eachId);
 			}
 		}
 
@@ -415,7 +451,7 @@ class Collection implements \Iterator, \Countable {
 
 		// instanciate if necessary
 		if (isset($this->_instances[$ID]) && ($this->_instances[$ID] === true)) {
-			$this->_instances[$ID] = \ModelManager::getObject($modelClassname, $ID);
+			$this->_instances[$ID] = \ModelInstanceManager::getObject($modelClassname, $ID);
 		}
 		elseif (isset($this->_instances[$ID]) && ($ID === $this->_instances[$ID])) {
 			// @todo here I should do a load on the model but have some control over this
@@ -465,7 +501,7 @@ class Collection implements \Iterator, \Countable {
 
 	/**
 	 * I load a collection based on ... WHAT? :D
-	 * @param CollectionGetConfig $Config
+	 * @param CollectionLoadConfig $Config
 	 * @return \Collection
 	 */
 	public function load($filterOrDataOrConfig=null, \CollectionGetConfig $Config = null) {
@@ -484,7 +520,7 @@ class Collection implements \Iterator, \Countable {
 		}
 
 		if (is_null($filterOrDataOrConfig)) {
-			$Config = CollectionGetConfig::get(array(
+			$Config = CollectionLoadConfig::get(array(
 					'allowLoad' => true,
 			));
 		}
@@ -523,7 +559,7 @@ class Collection implements \Iterator, \Countable {
 
 		}
 
-		$datas = $this->getStore(\Model::STORE_READ)->loadCollection($this, $Config);
+		$datas = $this->_getStore(\Model::STORE_READ)->loadCollection($this, $Config);
 
 		$this->setItems($datas, $Config->accumulate);
 
@@ -536,7 +572,7 @@ class Collection implements \Iterator, \Countable {
 	 * @return $this
 	 */
 	function loadByQuery($query, \CollectionGetConfig $Config=null) {
-		$datas = $this->getStore(\Model::STORE_READ)->queryData($query);
+		$datas = $this->_getStore(\Model::STORE_READ)->queryData($query);
 		$this->setItems($datas, $Config->accumulate);
 		return $this;
 	}

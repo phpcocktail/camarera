@@ -23,7 +23,7 @@ namespace Camarera;
  * @package Camarera\Collection
  * @version 1.01
  */
-class CollectionGetConfig extends \Config implements \StoreMethodConfig {
+class CollectionLoadConfig extends \Config implements \Camarera\StoreMethodConfig {
 
 	/**
 	 * @var boolean set to true to perform data load from store

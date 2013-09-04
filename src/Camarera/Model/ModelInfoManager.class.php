@@ -19,7 +19,7 @@
 namespace Camarera;
 
 /**
- * ModelMetaInfo is an info registry about Model metadata
+ * ModelInfoManager is an info registry about Model metadata
  * @todo after initial development, check if extending the Model class is still needed??? (for accessing protected data)
  *
  * @author t
@@ -28,7 +28,7 @@ namespace Camarera;
  * @version 1.1
  *
  */
-class ModelMetaInfo extends Model {
+class ModelInfoManager extends Model {
 
 	/**
 	 * @var string[] these fieldnames must not be used because their getter/setter methods would collide with other

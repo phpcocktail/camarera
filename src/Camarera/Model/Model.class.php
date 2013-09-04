@@ -76,7 +76,7 @@ abstract class Model {
 	}
 
 	/**
-	 * I call ModelMetaInfo::inflate() to initialize all static variables, convert field defs etc.
+	 * I call ModelInfoManager::inflate() to initialize all static variables, convert field defs etc.
 	 * I only call once, hence the check for isInflated()
 	 *
 	 * @return string current scope classname. just for convenience, because many times it's needed right after inflate()
@@ -84,8 +84,8 @@ abstract class Model {
 	 */
 	protected static function _inflate() {
 		$classname = get_called_class();
-		if (!\ModelMetaInfo::isInflated($classname)) {
-			\ModelMetaInfo::inflate(
+		if (!\ModelInfoManager::isInflated($classname)) {
+			\ModelInfoManager::inflate(
 				$classname,
 				static::_getInitialFieldDefs(),
 				static::$_idFieldName,
@@ -104,7 +104,7 @@ abstract class Model {
 	 */
 	public static function field($fieldnames=null) {
 		$classname = static::_inflate();
-		return \ModelMetaInfo::getField($classname, $fieldnames);
+		return \ModelInfoManager::getField($classname, $fieldnames);
 	}
 	/**
 	 * I return all id field names in array. Usually there will be just one, the array is for composite ID support
@@ -112,7 +112,7 @@ abstract class Model {
 	 */
 	public static function idFieldName() {
 		$classname = static::_inflate();
-		return \ModelMetaInfo::getIdFieldname($classname);
+		return \ModelInfoManager::getIdFieldname($classname);
 	}
 	/**
 	 * I return store table. For now just a string, in future, may be array for particioned store model
@@ -120,7 +120,7 @@ abstract class Model {
 	 */
 	public static function storeTable() {
 		$classname = static::_inflate();
-		return \ModelMetaInfo::getStoreTable($classname);
+		return \ModelInfoManager::getStoreTable($classname);
 	}
 
 
@@ -131,12 +131,12 @@ abstract class Model {
 	/**
 	 * @var boolean controls if this class is managable or not. Setting false is useful if you use the model without
 	 * 		store capabilities, eg. an input validator model shouldn't be managed in object pool, just used locally
-	 * @see \ModelManager
+	 * @see \ModelInstanceManager
 	 */
 	protected static $_isRegisterable = true;
 	/**
 	 * @var boolean tells if this instance is registered or not
-	 * @see \ModelManager
+	 * @see \ModelInstanceManager
 	 */
 	protected $_isRegistered = false;
 	/**
@@ -193,12 +193,12 @@ abstract class Model {
 		if (!isset($Config->data)) {
 			$Model = new static;
 		}
-		// if object is registered, but not loadable, try getting from modelmanager
+		// if object is registered, but not loadable, try getting from ModelInstanceManager
 		elseif (!empty($Config->data) &&
 			static::$_isRegisterable &&
 			$Config->registeredInstance &&
 			!$Config->allowLoad &&
-			($Model = \ModelManager::get(get_called_class(), $Config->data, true))
+			($Model = \ModelInstanceManager::get(get_called_class(), $Config->data, true))
 		);
 		// $Config->data is PK value
 		elseif (is_integer($Config->data) || is_string($Config->data)) {
@@ -233,7 +233,7 @@ abstract class Model {
 	 * @return \Model
 	 */
 	public function registerInstance() {
-		\ModelManager::set(get_class($this), $this);
+		\ModelInstanceManager::set(get_class($this), $this);
 		return $this;
 	}
 
@@ -451,7 +451,7 @@ abstract class Model {
 		}
 		elseif (is_string($field)) {
 			$classname = get_class($this);
-			if (!\ModelMetaInfo::getField($classname, $field)) {
+			if (!\ModelInfoManager::getField($classname, $field)) {
 				throw new MagicGetException($field, get_class($this));
 			}
 			$ret = null;
@@ -492,7 +492,7 @@ abstract class Model {
 	 */
 	protected function _setValue($field, $value) {
 		$classname = get_class($this);
-		if (!array_key_exists($field, \ModelMetaInfo::getField($classname))) {
+		if (!array_key_exists($field, \ModelInfoManager::getField($classname))) {
 			throw new \MagicSetException($field, get_class($this));
 		}
 
@@ -742,7 +742,7 @@ abstract class Model {
 		$uniqueChecks = array();
 		$validationErrors = array();
 		$classname = get_class($this);
-		$fields = \ModelMetaInfo::getField($classname);
+		$fields = \ModelInfoManager::getField($classname);
 		foreach ($fields as $eachFieldName=>$EachField) {
 			try {
 				if ($EachField->unique) {
@@ -796,7 +796,7 @@ abstract class Model {
 	 */
 	public static function collectionClassname() {
 		$classname = static::_inflate();
-		return \ModelMetaInfo::getCollectionClassname($classname);
+		return \ModelInfoManager::getCollectionClassname($classname);
 	}
 
 	/**
@@ -804,7 +804,7 @@ abstract class Model {
 	 */
 	public static function collection(\CollectionGetConfig $Config=null) {
 		$classname = static::_inflate();
-		$collectionClassname = \ModelMetaInfo::getCollectionClassname($classname);
+		$collectionClassname = \ModelInfoManager::getCollectionClassname($classname);
 //		$Collection = $collectionClassname::serve();
 		$Collection = $collectionClassname::get($Config);
 		$Collection->setModelClassname($classname);
