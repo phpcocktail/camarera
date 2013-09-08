@@ -29,19 +29,42 @@ class FieldSet extends \FieldEnum {
 	 * @return array
 	 * @throws \InvalidArgumentException
 	 */
-	public static function setValue(&$value) {
+	public function setValue($value) {
 		$originalValue = $value;
 		if (is_array($value));
 		elseif (is_string($value)||is_numeric($value)) {
 			$value = array($value);
 		}
 		else {
-			throw new \InvalidArgumentException($value);
+			$value = null;
 		}
+
 		$arrayValue = $value;
 		$value = array_intersect($value, $this->validValues);
 		if (array_diff($arrayValue, $value)) {
-			throw new \InvalidArgumentException($originalValue);
+			$value = null;
+		}
+		return $value;
+	}
+
+	public function addValue($value, $addValue) {
+		if (is_null($value)) {
+			$value = array();
+		}
+		elseif (!is_array($value)) {
+			throw new \BadMethodCallException();
+		}
+		if (is_array($addValue)) {
+			if (!empty(array_diff($this->validValues, $addValue))) {
+				throw new \InvalidArgumentException();
+			}
+			$value = array_merge($value, $addValue);
+		}
+		else {
+			if (!in_array($addValue, $this->validValues)) {
+				throw new \InvalidArgumentException();
+			}
+			$value[] = $addValue;
 		}
 		return $value;
 	}

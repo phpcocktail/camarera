@@ -28,7 +28,7 @@ namespace Camarera;
  * @version 1.1
  *
  */
-class ModelInfoManager extends Model {
+class ModelInfoManager {
 
 	/**
 	 * @var string[] these fieldnames must not be used because their getter/setter methods would collide with other

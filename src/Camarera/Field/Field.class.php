@@ -76,13 +76,20 @@ class Field extends \Config {
 	public $maxLen = null;
 
 	/**
-	 * @var string[] I am mandatory if any element of the array is present in the request
-	 * 		an array item can be an array too, which means all the fields in the request must be present
+	 * @var string regexp to match against
+	 */
+	public $regexp = null;
+
+	/**
+	 * @var string[] I am mandatory if any element of the array is present in current data
+	 * 		an array item can be an array too, which means all the fields in the data must be present
+	 * 		eg. array('a1',array('b1','b2'),'c1') triggered if: a1 is present OR (b1 AND b2 are present) OR c1 is present
 	 */
 	public $mandatoryWith = null;
 
 	/**
 	 * @var string[] like $mandatoryWith, but I am required if those params are present and evaluate to true,1,on
+	 * @see notation in $mandatoryWith
 	 */
 	public $mandatoryOn = null;
 
@@ -91,6 +98,11 @@ class Field extends \Config {
 	 * @todo check and fix its implementation
 	 */
 	public $unique = false;
+
+	/**
+	 * @var array can be an array of other field names to be unique with. Only fields in same model are supported
+	 */
+	public $uniqueWith = null;
 
 	/**
 	 * @var callable[] extra validators to be used
@@ -106,22 +118,23 @@ class Field extends \Config {
 	protected $type = null;
 
 	/**
-	 * the actual internal value will be passed through this when exposing data. Eg. a datim field which stores
-	 *	timestamps internally may convert the timestamp to a date here. Or, clear password field value. Usually not needed.
-	 * @param mixed $value
-	 * @return mixed
-	 */
-	public static function getValue($value) {
-		return $value;
-	}
-
-	/**
 	 * any value to be set will be run through this. You can implement eg. validation, typecasting, or even password
 	 *	hashing here
 	 * @param mixed $value
 	 * @return mixed
 	 */
-	public static function setValue(&$value) {
+	public function setValue($value) {
+		return $value;
+	}
+
+	/**
+	 * I add a value to the current value. Useful for numeric, string, and set types, but not for enum...
+	 * @param $value mixed, according to field
+	 * @param $addValue scalar or array for set
+	 * @return mixed
+	 */
+	public function addValue($value, $addValue) {
+		$value = $value + $addValue;
 		return $value;
 	}
 
@@ -140,25 +153,31 @@ class Field extends \Config {
 	 * @param mixed $value
 	 */
 	public function validate($value) {
-		$hasValue = isset($value) && !empty($value);
+
+		$hasValue = !is_null($value);
 
 		$errors = array();
 
 		if ($this->mandatory && !$hasValue) {
 			$errors['mandatory'] = null;
 		}
-		if (isset($this->minVal) && ($value<$this->minVal)) {
-			$errors['minVal'] = $this->minVal;
-		}
-		if (isset($this->maxVal) && ($value>$this->maxVal)) {
-			$errors['maxVal'] = $this->maxVal;
-		}
-		if (isset($this->minLength) && (strlen($value)<$this->minLength)) {
-			$errors['minLength'] = $this->minLength;
-		}
-		if (isset($this->maxLength) && (strlen($value)>$this->maxLength)) {
-			$errors['maxLength'] = $this->maxLength;
-		}
+		if ($hasValue) {
+			if (isset($this->minVal) && ($value<$this->minVal)) {
+				$errors['minVal'] = $this->minVal;
+			}
+			if (isset($this->maxVal) && ($value>$this->maxVal)) {
+				$errors['maxVal'] = $this->maxVal;
+			}
+			if (isset($this->minLength) && (strlen($value)<$this->minLength)) {
+				$errors['minLength'] = $this->minLength;
+			}
+			if (isset($this->maxLength) && (strlen($value)>$this->maxLength)) {
+				$errors['maxLength'] = $this->maxLength;
+			}
+			if (isset($this->regexp) && !preg_match($this->regexp, $value)) {
+				$errors['regexp'] = $this->regexp;
+			}
+		};
 //		foreach ($this->validators as $eachValidatorName=>$eachValidator) {
 //			if (!$eachValidator->validate($value, $this)) {
 //				$errors[$eachValidatorName] = $eachValidator->getValue();
@@ -168,6 +187,7 @@ class Field extends \Config {
 	}
 
 	public function validateInModel($value, \Model $Model) {
+
 		$hasValue = isset($value) && !empty($value);
 
 		$errors = array();

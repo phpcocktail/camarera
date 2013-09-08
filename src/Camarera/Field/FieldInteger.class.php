@@ -28,7 +28,7 @@ class FieldInteger extends \Field {
 	 * @param mixed $value
 	 * @return integer
 	 */
-	public static function setValue(&$value) {
+	public function setValue($value) {
 		$value = (int) $value;
 		return $value;
 	}

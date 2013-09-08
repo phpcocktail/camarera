@@ -28,7 +28,7 @@ class FieldFloat extends \Field {
 	 * @param mixed $value
 	 * @return double
 	 */
-	public static function setValue(&$value) {
+	public function setValue($value) {
 		$value = (double) $value;
 		return $value;
 	}

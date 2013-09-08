@@ -33,9 +33,9 @@ namespace Camarera;
 class ModelLoadConfig extends \Config implements \Camarera\StoreMethodConfig {
 
 	/**
-	 * @var string|array only these fields will be loaded, may be null or array of fieldnames
+	 * @var string|array only these fields will be loaded, may be '*' for all fields or array of fieldnames
 	 */
-	public $loadFields;
+	public $loadFields = '*';
 
 	/**
 	 * @var boolean if false, stores will not be used to get the object (but manager will be, if available)

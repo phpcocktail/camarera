@@ -292,9 +292,9 @@ class Collection implements \Iterator, \Countable {
 	/**
 	 * @return string I return the actual model's storetable (remember: without prefix, prefix belongs to store)
 	 */
-	function getStoreTable() {
+	function storeTable() {
 		$ModelClassname = static::getModelClassname();
-		return $ModelClassname::getStoreTable();
+		return $ModelClassname::storeTable();
 	}
 
 	//////////////////////////////////////////////////////////////////////////

@@ -1,4 +1,4 @@
- <?php
+<?php
 /**
  * Copyright © 2013 t
  * This work is free. You can redistribute it and/or modify it under the
@@ -24,6 +24,6 @@ namespace Camarera;
  * @package Camarera\Model
  * @version 1.01
  */
-class ModelDeleteConfig extends \Config implements \StoreMethodConfig {
+class ModelDeleteConfig extends \Config implements \Camarera\StoreMethodConfig {
 
 }

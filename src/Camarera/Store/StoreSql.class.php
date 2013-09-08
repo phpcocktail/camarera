@@ -127,7 +127,7 @@ abstract class StoreSql extends \Store {
 					$tablename = substr($eachFieldName, 0, $pos);
 					// include data in ret unly if it was selected for this object
 					// @todo handle additional data resulting of eager loading here
-					if ($tablename === $Model::getStoreTable()) {
+					if ($tablename === $Model::storeTable()) {
 						$fieldName = substr($eachFieldName, $pos+1);
 						$ret[$fieldName] = $eachValue;
 					}
@@ -143,23 +143,25 @@ abstract class StoreSql extends \Store {
 	protected function _loadModelGetFields($modelClassname, \Camarera\StoreMethodConfig $LoadConfig) {
 		$ModelFields = array_keys($modelClassname::field());
 		$configFields = $LoadConfig->loadFields;
-		if (($configFields === '*') || is_null($configFields)) {
+		if ($configFields === '*') {
 			$loadFields = $ModelFields;
 		}
 		else {
 			$loadFields = array_intersect($ModelFields, $configFields);
 		}
+
+		$storeTable = $modelClassname::storeTable();
 		foreach ($loadFields as &$loadField) {
 			$loadField =
-					$this->_Config->tablePrefix . $modelClassname::getStoreTable() . '.' . $loadField .
+					$this->_Config->tablePrefix . $storeTable . '.' . $loadField .
 					' AS ' .
-					'`' . $modelClassname::getStoreTable() . '.' . $loadField . '`';
+					'`' . $storeTable . '.' . $loadField . '`';
 		}
 		// @todo map to sql fieldnames as set in model fields' config sql alias
 		return implode(',', $loadFields);
 	}
 	protected function _loadModelGetTables($modelClassname, \Camarera\StoreMethodConfig $LoadConfig) {
-		$table = $this->_Config->tablePrefix . $modelClassname::getStoreTable();
+		$table = $this->_Config->tablePrefix . $modelClassname::storeTable();
 		return $table;
 	}
 	protected function _loadModelGetWhere(\Model $Model, \Camarera\StoreMethodConfig $LoadConfig) {
@@ -176,7 +178,7 @@ abstract class StoreSql extends \Store {
 		$modelValues = $Model->getValue(null);
 		foreach ($modelValues as $eachFieldName=>$eachFieldValue) {
 			$quotes = $Model::field($eachFieldName)->storeQuote;
-			$whereData[($withTableNames ? $this->_Config->tablePrefix . $Model::getStoreTable() . '.' : '') . $eachFieldName] = static::escape($eachFieldValue, $quotes);
+			$whereData[($withTableNames ? $this->_Config->tablePrefix . $Model::storeTable() . '.' : '') . $eachFieldName] = static::escape($eachFieldValue, $quotes);
 		}
 		return $whereData;
 	}
@@ -226,7 +228,7 @@ abstract class StoreSql extends \Store {
 			$wheres[] = $eachIdFieldName . '=' . $this->escape($Model->getValue($eachIdFieldName), $quotes);
 		}
 
-		$query = 'UPDATE ' . $this->_Config->tablePrefix . $Model->getStoreTable() .
+		$query = 'UPDATE ' . $this->_Config->tablePrefix . $Model->storeTable() .
 					' SET ' . implode(',', $sets) .
 					' WHERE ' . implode(' AND ', $wheres);
 
@@ -266,7 +268,7 @@ abstract class StoreSql extends \Store {
 		}
 
 		$query = 'INSERT ' .
-					' INTO ' . $this->_Config->tablePrefix . $Model->getStoreTable() .
+					' INTO ' . $this->_Config->tablePrefix . $Model->storeTable() .
 					' (' . implode(',', array_keys($whereData)) . ') VALUES (' . implode(',', $whereData) . ')';
 
 		$result = $this->execute($query);
@@ -281,7 +283,7 @@ abstract class StoreSql extends \Store {
 			}
 			$insertId = $this->_getInsertId();
 			$insertData = array (
-					$idFieldName => $Model::field($idFieldName)->setValue($insertId),
+				$idFieldName => $Model::field($idFieldName)->setValue($insertId),
 			);
 		}
 
@@ -298,7 +300,7 @@ abstract class StoreSql extends \Store {
 	 */
 	public function deleteModel(\Model $Model, \ModelDeleteConfig $DeleteConfig) {
 		$query = 'DELETE ' .
-				' FROM ' . $this->_Config->tablePrefix . $Model->getStoreTable() .
+				' FROM ' . $this->_Config->tablePrefix . $Model->storeTable() .
 				' WHERE ' . $this->_loadModelGetWHere($Model, $DeleteConfig);
 	}
 
@@ -327,7 +329,7 @@ abstract class StoreSql extends \Store {
 						$tablename = substr($eachFieldName, 0, $pos);
 						// include data in ret unly if it was selected for this object
 						// @todo handle additional data resulting of eager loading here
-						if ($tablename === $modelClassname::getStoreTable()) {
+						if ($tablename === $modelClassname::storeTable()) {
 							$fieldName = substr($eachFieldName, $pos+1);
 							$ret[$dataKey][$fieldName] = $eachValue;
 						}
@@ -379,7 +381,7 @@ abstract class StoreSql extends \Store {
 		}
 		else {
 			$modelClassname = $Collection::getModelClassname();
-			$ret = $this->_compileFilters($LoadConfig->filter, $this->_Config->tablePrefix . $modelClassname::getStoreTable());
+			$ret = $this->_compileFilters($LoadConfig->filter, $this->_Config->tablePrefix . $modelClassname::storeTable());
 		}
 		return $ret;
 	}

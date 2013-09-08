@@ -30,18 +30,18 @@ class FieldPassword extends \FieldString {
 	/**
 	 * @var string current method for encryption, as per consts
 	 */
-	protected static $_method;
+	protected $_method;
 
 	/**
 	 * I return current encrypt method, fetch from config if not set explicitly. Note that encrypt method setting is
 	 * 		static so if you need diverse encryptions you have to handle it on app level and use setRaw()
 	 * @return mixed|string
 	 */
-	public static function getMethod() {
-		if (is_null(static::$_method)) {
-			static::$_method = \Camarera::conf('Field.password.method');
+	public function getMethod() {
+		if (is_null($this->_method)) {
+			$this->_method = \Camarera::conf('Field.password.method');
 		}
-		return static::$_method;
+		return $this->_method;
 	}
 
 	/**
@@ -49,8 +49,8 @@ class FieldPassword extends \FieldString {
 	 * @param mixed $value
 	 * @return string
 	 */
-	public static function setValue(&$value) {
-		switch(static::getMethod()) {
+	public function setValue($value) {
+		switch($this->getMethod()) {
 			case static::METHOD_MD5:
 				$value = md5((string)$value);
 				break;

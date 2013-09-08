@@ -10,33 +10,43 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- */
-namespace Camarera;
-
-/**
- * special enum field for booleain (on/off) fields
  *
  * @author t
- * @package Camarera\Field
  * @license DWTFYWT
  * @version 1.1
  */
-class FieldBool extends \Field {
 
-	/**
-	 * @see \Field::$_storeQuote
-	 */
-//	protected $_storeQuote = '"';
+class TestModelAMultiId extends \Model {
 
-	/**
-	 * I check if value is valid
-	 * @param mixed $value
-	 * @return mixed
-	 * @throws \InvalidArgumentException
-	 */
-	public static function setValue($value) {
-		$value = $value ? true : false;
-		return $value;
-	}
+	use TraitTestModel;
+
+	public static $fieldNames = array('idx','ids','x1','x2','s1','s2');
+
+	protected static $_idFieldName = array('idx','ids');
+
+	protected static $_fields = array(
+		'idx' => array(
+			'type' => 'integer',
+		),
+		'ids' => array(
+			'type' => 'string',
+		),
+		'x1' => array(
+			'type' => 'integer',
+			'minVal' => 1,
+			'maxVal' => 10,
+		),
+		'x2' => array(
+			'type' => 'integer',
+			'minVal' => 1,
+			'maxVal' => 100,
+		),
+		's1' => array(
+			'type' => 'string',
+			'minLen' => 3,
+			'maxLen' => 10,
+		),
+		's2',
+	);
 
 }

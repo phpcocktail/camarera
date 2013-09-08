@@ -25,13 +25,21 @@ class FieldString extends \Field {
 
 	protected $_storeQuote = '"';
 
+	protected $_addValueGlue = "\n";
+
 	/**
 	 * I cast value to string
 	 * @param mixed $value
 	 * @return string
 	 */
-	public static function setValue(&$value) {
+	public function setValue($value) {
 		$value = \Util::toString($value);
+		return $value;
+	}
+
+	public function addValue($value, $addValue) {
+		$addValue = \Util::toString($value);
+		$value = $value . $this->_addValueGlue . $addValue;
 		return $value;
 	}
 

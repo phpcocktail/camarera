@@ -38,22 +38,24 @@ namespace Camarera;
  * @version 1.01
  *
  * @property string $ID the unique ID of the object
- * @property-read string[] $idFieldName name of id fields
- * @property-read boolean $isDirty
  * @property-read boolean $isRegistered
- * @property-read string $storeTable
+ * @property-read \ModelLoadConfg $LastLoadConfig
  */
 abstract class Model {
 
 	/** @var string FIELD_NAME_PATTERN this is the pattern to match property names */
-	const FIELD_NAME_PATTERN = '/^(\_id)|([a-z]+[a-zA-Z0-9]*)$/';
+	const FIELD_NAME_PATTERN = '/^(_id)$|^([a-z]+[a-zA-Z0-9\_]*)$/';
+	const FIELD_GETTER_PATTERN = '/^get([A-Z]+[a-zA-Z0-9\_]*)$/';
+	const FIELD_SETTER_PATTERN = '/^set([A-Z]+[a-zA-Z0-9\_]*)$/';
+	const FIELD_ADDER_PATTERN = '/^add([A-Z]+[a-zA-Z0-9\_]*)$/';
+
 
 	/** @var \Field[] field objects */
 	protected static $_fields = null;
 	/** @var string[]|string you can define ID field name or names if ID is built of more than one field */
 	protected static $_idFieldName = null;
 	/** @var string I use this to implode id field values into uniqe ID, if there are more than one id fields */
-	protected static $_idFieldGlue = '_';
+	protected static $_idFieldGlue = '-';
 	/**
 	 * override this to specify default table name, or leave null to use the lowercase classname
 	 * 		note it can be overridden in store access methods by proper configs
@@ -142,7 +144,7 @@ abstract class Model {
 	/**
 	 * @var \ModelLoadConfig the last Config used in a get() or load()
 	 */
-	protected $_LastGetConfig = null;
+	protected $_LastLoadConfig = null;
 
 	/**
 	 * read-only access
@@ -162,26 +164,39 @@ abstract class Model {
 	 * @param ModelLoadConfig $Config get options. @see ModelLoadConfig for options
 	 * @return \Model
 	 */
-	public static function serve($dataOrConfig=null, \ModelLoadConfig $Config=null) {
+	public static function serve($dataOrConfig=null, $Config=null) {
 
 		static::_inflate();
 
 		// if there are 2 params, map it to 1-param call
-		if (!is_null($Config)) {
+		if (!is_null($Config) && ($Config instanceof \ModelLoadConfig)) {
 			$Config->data = $dataOrConfig;
 			return static::serve($Config);
 		}
 
 		// now we only have $dataOrConfig, make one sane $Config object
+
+		// Model::serve() - returns empty object
 		if (is_null($dataOrConfig)) {
+			if (!is_null($Config)) {
+				throw new \BadMethodCallException('Model::serve() - $Config must be null if $dataOrConfig is null');
+			}
 			$Config = \ModelLoadConfig::serve(array('allowLoad'=>false));
 		}
+		// Model::serve(1, array('x'=>2,'y'=>3)) - returns object of ID=1 and rest of data applied
+		elseif ((is_string($dataOrConfig) || is_integer($dataOrConfig)) && is_array($Config)) {
+			$data = $Config + array(static::idFieldName() => $dataOrConfig);
+			$Config = \ModelLoadConfig::serve(array('data'=>$data, 'allowLoad'=>false));
+		}
+		// Model::serve(1) - returns object with id=1
+		// Model::serve(array('x1'=>1)) - returns object with x1=1
 		elseif (is_string($dataOrConfig) || is_integer($dataOrConfig) || is_array($dataOrConfig)) {
 			$Config = \ModelLoadConfig::serve(array(
 					'data' => $dataOrConfig,
 					'allowLoad' => false,
 			));
 		}
+		// Model::serve($Config) - returns object according to $Config
 		elseif (is_object($dataOrConfig) && ($dataOrConfig instanceof \ModelLoadConfig)) {
 			$Config = $dataOrConfig;
 		}
@@ -202,7 +217,6 @@ abstract class Model {
 		);
 		// $Config->data is PK value
 		elseif (is_integer($Config->data) || is_string($Config->data)) {
-			debug_print_backtrace(); die('TEST ME1');
 			$Model = new static;
 			$Model->setId($Config->data);
 			if ($Config->allowLoad) {
@@ -223,7 +237,7 @@ abstract class Model {
 			}
 		}
 
-		$Model->_LastGetConfig = $Config;
+		$Model->_LastLoadConfig = $Config;
 
 		return $Model;
 	}
@@ -233,6 +247,9 @@ abstract class Model {
 	 * @return \Model
 	 */
 	public function registerInstance() {
+		if (!$this->isRegisterable()) {
+			throw new \BadMethodCallException('Model::registerInstance() - class ' . get_class($this) . ' cannot be registered by declaration of static::$_isRegisterable');
+		}
 		\ModelInstanceManager::set(get_class($this), $this);
 		return $this;
 	}
@@ -253,16 +270,12 @@ abstract class Model {
 		switch(true) {
 			case $field === 'ID':
 				return $this->getID();
-			case $field === 'idFieldName':
-				return static::idFieldName();
 			case $field === 'isRegistered':
 				return $this->_isRegistered;
-			case $field === 'storeTable':
-				return $this->storeTable();
 			case $field === 'isValid':
 				return $this->_isValid;
-			case $field === 'LastGetConfig':
-				return $this->_LastGetConfig;
+			case $field === 'LastLoadConfig':
+				return $this->_LastLoadConfig;
 			//case $field === 'isLoaded':
 			// magic field value getters
 			case (preg_match(static::FIELD_NAME_PATTERN, $field)):
@@ -291,17 +304,19 @@ abstract class Model {
 	 * @return mixed
 	 */
 	public function __call($method, $arguments) {
-		$getterPattern = strtr(lcFirst($method), array('/^' => '/^get(', '$/' => ')$/'));
-		$setterPattern = strtr(lcFirst($method), array('/^' => '/^set(', '$/' => ')$/'));
-		$getterPattern = '/^get([A-Z]+[a-zA-Z0-9]*)$/';
-		$setterPattern = '/^set([A-Z]+[a-zA-Z0-9]*)$/';
+//		$getterPattern = strtr(lcFirst($method), array('/^' => '/^get(', '$/' => ')$/'));
+//		$setterPattern = strtr(lcFirst($method), array('/^' => '/^set(', '$/' => ')$/'));
+//		$getterPattern = '/^get([A-Z]+[a-zA-Z0-9]*)$/';
+//		$setterPattern = '/^set([A-Z]+[a-zA-Z0-9]*)$/';
 		$params = func_get_args();
 		array_shift($params);
 		switch (true) {
-			case preg_match($getterPattern, $method, $matches):
+			case preg_match(static::FIELD_GETTER_PATTERN, $method, $matches):
 				return $this->getValue(lcfirst($matches[1]));
-			case preg_match($setterPattern, $method, $matches):
+			case preg_match(static::FIELD_SETTER_PATTERN, $method, $matches):
 				return $this->setValue(lcfirst($matches[1]), reset($arguments));
+			case preg_match(static::FIELD_ADDER_PATTERN, $method, $matches):
+				return $this->addValue(lcfirst($matches[1]), reset($arguments));
 			default:
 				throw new \MagicCallException($method, get_class($this));
 		}
@@ -322,14 +337,12 @@ abstract class Model {
 	protected $_storedValues = array();
 
 	/**
-	 * define a public rawGet() in your model simply calling this _getRaw() if you want to open. Not recommended, though
-	 * @param string $field
-	 * @param boolean $storedValue if true I return stored value otherwise actual value
-	 * @return mixed
+	 * I set a value without casting it to the field's internal type. You don't want to use this, use setValue()
+	 * @param $field
+	 * @param $value
+	 * @param bool $storedValue
+	 * @return $this
 	 */
-	protected function _getRaw($field, $storedValue=false) {
-		return $storedValue ? $this->_storedValues[$field] : $this->_values[$field];
-	}
 	protected function _setRaw($field, $value, $storedValue=false) {
 		if ($storedValue) {
 			$this->_storedValues[$field] = $value;
@@ -352,10 +365,13 @@ abstract class Model {
 		}
 		elseif (is_array($idFieldName)) {
 			$idFields = array();
+			$hasValue = false;
 			foreach ($idFieldName as $eachIdFieldName) {
-				$idFields[] = $this->getValue($eachIdFieldName);
+				$eachValue = $this->getValue($eachIdFieldName);
+				$hasValue = $hasValue || !is_null($eachValue);
+				$idFields[] = $eachValue;
 			}
-			$id = implode(static::$_idFieldGlue, $idFields);
+			$id = $hasValue ? implode(static::$_idFieldGlue, $idFields) : null;
 		}
 		return $id;
 	}
@@ -372,15 +388,25 @@ abstract class Model {
 		}
 		elseif (is_array($idFieldName)) {
 			$idFields = array();
+			$hasValue = false;
 			foreach ($idFieldName as $eachIdFieldName) {
-				$idFields[] = array_key_exists($eachIdFieldName, $data) ? $data[$idFieldName] : null;
+				$eachValue = null;
+				if (array_key_exists($eachIdFieldName, $data)) {
+					$eachValue = $data[$eachIdFieldName];
+					$hasValue = true;
+				}
+				$idFields[] = $eachValue;
 			}
-			$id = implode(static::$_idFieldGlue, $idFields);
+			$id = $hasValue ? implode(static::$_idFieldGlue, $idFields) : null;
 		}
 		return $id;
 	}
 	/**
-	 * I try to set ID field values. I can only set if there is just one ID field,
+	 * I try to set ID field values. I can only set if:
+	 * 		there is just one ID field, OR
+	 * 		the $id is an array according to $idFieldNames
+	 * 		the $id is a clearly explodable string, like what you'd get with getID
+	 *
 	 * @param string $id
 	 * @throws \RuntimeException
 	 * @throws \BadMethodCallException
@@ -400,19 +426,14 @@ abstract class Model {
 			if (empty(static::$_idFieldGlue)) {
 				throw new \RuntimeException('static::$_idFieldGlue not defined in ' . get_called_class());
 			}
-			// @todo this should be examined based on the type(s) of id field(s)
-			elseif (!is_string($id) && !is_integer($id)) {
-				throw new \BadMethodCallException('id ' . print_r($id,1) . ' invalid');
-			}
 
 			$idFieldName = static::idFieldName();
 			if (is_string($idFieldName)) {
 				$this->setValue($idFieldName, $this->field($idFieldName)->setValue($id));
 			}
-			// @todo test this
 			elseif (is_array($idFieldName)) {
 				if ((substr_count($id, static::$_idFieldGlue)+1) !== count($idFieldName)) {
-					throw new \BadMethodCallException('id ' . $id . ' invalid');
+					throw new \InvalidArgumentException('id ' . $id . ' invalid');
 				}
 				$idParts = explode(static::$_idFieldGlue, $id);
 				foreach ($idFieldName as $eachKey => $eachIdFieldName) {
@@ -442,14 +463,7 @@ abstract class Model {
 			$field = array_keys($storedValue ? $this->_storedValues : $this->_values);
 		}
 
-		if (is_array($field)) {
-			$ret = array();
-			foreach ($field as $eachField) try {
-				$ret[$eachField] = $this->getValue($eachField, $storedValue);
-			}
-			catch (\Exception $e) {};
-		}
-		elseif (is_string($field)) {
+		if (is_string($field)) {
 			$classname = get_class($this);
 			if (!\ModelInfoManager::getField($classname, $field)) {
 				throw new MagicGetException($field, get_class($this));
@@ -457,8 +471,15 @@ abstract class Model {
 			$ret = null;
 			if (array_key_exists($field, $this->_values)) {
 				// I call the field get filter/processor
-				$ret = $this->field($field)->getValue($storedValue ? $this->_storedValues[$field] : $this->_values[$field]);
+				$ret = $storedValue ? $this->_storedValues[$field] : $this->_values[$field];
 			}
+		}
+		elseif (is_array($field)) {
+			$ret = array();
+			foreach ($field as $eachField) try {
+				$ret[$eachField] = $this->getValue($eachField, $storedValue);
+			}
+			catch (\Exception $e) {};
 		}
 		else {
 			throw new \BadMethodCallException('invalid parameter for getValue, only string and array are valid');
@@ -474,7 +495,7 @@ abstract class Model {
 	 * @param null|mixed $valueOrReplace @see _setValues()
 	 * @param null|bool $throw @see _setValues()
 	 */
-	public function setValue($fieldOrData, $valueOrReplace=null, $throw=null) {
+	public function setValue($fieldOrData, $valueOrReplace=null, $throw=true) {
 		if (is_array($fieldOrData)) {
 			return $this->_setValues($fieldOrData, $valueOrReplace, $throw);
 		}
@@ -484,9 +505,8 @@ abstract class Model {
 	}
 	/**
 	 * set one value, if it is writeable (otherwise, you have to take care of setting that parameter)
-	 * @todo implement is_writable
-	 * @param unknown $field
-	 * @param unknown $value
+	 * @param string $field
+	 * @param mixed $value
 	 * @throws MagicSetException
 	 * @return \Model
 	 */
@@ -498,8 +518,7 @@ abstract class Model {
 
 		// I call field object's set validator/processor. Normally it returns $value unintact, otherwise modifies it
 		$Field = $this->field($field);
-		$Field->setValue($value);
-		$this->_values[$field] = $value;
+		$this->_values[$field] = $Field->setValue($value);
 		return $this;
 	}
 	/**
@@ -518,14 +537,33 @@ abstract class Model {
 		if ($replace) {
 			$this->_values = array();
 		}
-		foreach ($values as $eachFieldName=>&$eachValue) try {
-			$this->setValue($eachFieldName, $eachValue);
-		}
-		catch (\Exception $e) {
-			if ($throw) {
-				throw $e;
+		foreach ($values as $eachFieldName=>&$eachValue) {
+			try {
+				$this->setValue($eachFieldName, $eachValue);
+			}
+			catch (\Exception $e) {
+				if ($throw) {
+					throw $e;
+				}
 			}
 		}
+		return $this;
+	}
+	/**
+	 * unified adder
+	 */
+	public function addValue($field, $addValue, $position=null) {
+		if (!is_null($position)) {
+			throw new \UnImplementedException();
+		}
+		if (!is_string($field)) {
+			throw new \BadMethodCallException();
+		}
+		elseif (!($Field = $this->field($field))) {
+			throw new \InvalidArgumentException();
+		}
+		$value = $this->getValue($field);
+		$this->_values[$field] = $Field->addValue($value, $addValue);
 		return $this;
 	}
 	/**
@@ -542,7 +580,7 @@ abstract class Model {
 	 * @return boolean true if I am dirty
 	 */
 	public function isDirty() {
-		return $this->_values === $this->_storedValues ? true : false;
+		return $this->_values === $this->_storedValues ? false : true;
 	}
 
 	/**
@@ -554,19 +592,21 @@ abstract class Model {
 	 */
 	public function isFieldDirty($fieldname) {
 		if (is_array($fieldname)) {
-			$ret = $fieldname;
-			foreach ($ret AS &$eachField) {
-				$eachField = $this->isFieldDirty($eachField);
+			$ret = array();
+			foreach ($fieldname AS $eachField) {
+				$ret[$eachField] = $this->isFieldDirty($eachField);
 			}
 		}
 		elseif (is_string($fieldname)) {
-			$ret = array_key_exists($fieldname, $this->_values) &&
+			$ret = true;
+			if (array_key_exists($fieldname, $this->_values) &&
 					array_key_exists($fieldname, $this->_storedValues) &&
-					($this->_values[$fieldname] == $this->_storedValues[$fieldname])
-				? true : false;
+					($this->_values[$fieldname] == $this->_storedValues[$fieldname])) {
+				$ret = false;
+			}
 		}
 		else {
-			throw new \InvalidArgumentException('field name invalid');
+			throw new \BadMethodCallException('field name invalid');
 		}
 		return $ret;
 	}
@@ -590,6 +630,12 @@ abstract class Model {
 	protected static $_storeRead = 'default';
 	protected static $_storeWrite = 'default';
 
+	/**
+	 * I get store (1 param) or set store (2 params)
+	 * @param $storeId
+	 * @param null $storeOrStoreName
+	 * @return \Store|void
+	 */
 	public static function Store($storeId, $storeOrStoreName=null) {
 		if (func_num_args() == 2) {
 			return static::_setStore($storeId, $storeOrStoreName);
@@ -656,6 +702,11 @@ abstract class Model {
 	//////////////////////////////////////////////////////////////////////////
 
 	/**
+	 * @var null|string|array after a load, I'll set the loaded fields (or '*' for all)
+	 */
+	protected $_loadedFields = null;
+
+	/**
 	 * I load a model
 	 * @param \ModelLoadConfig $LoadConfig
 	 * @return bool
@@ -663,7 +714,7 @@ abstract class Model {
 	 */
 	public function load(\ModelLoadConfig $LoadConfig=null) {
 		if (is_null($LoadConfig)) {
-			$LoadConfig = \ModelLoadConfig::get();
+			$LoadConfig = \ModelLoadConfig::serve();
 		}
 		$data = $this->_getStore(static::STORE_READ)->loadModel($this, $LoadConfig);
 		if ($data === false) {
@@ -677,7 +728,12 @@ abstract class Model {
 				$this->_values[$eachFieldName] = $eachValue;
 			}
 			$this->setStoredValues();
+			$this->_loadedFields = $LoadConfig->loadFields;
+			$this->_LastLoadConfig = $LoadConfig;
 			return true;
+		}
+		else {
+			return null;
 		}
 	}
 
@@ -732,7 +788,7 @@ abstract class Model {
 	// VALIDATION
 	//////////////////////////////////////////////////////////////////////////
 
-	protected $_isValid = true;
+	protected $_isValid = null;
 
 	protected $_validationErrors = array();
 

@@ -16,7 +16,8 @@ trait TraitTestModel {
 	}
 	public function __call($functionName, $args) {
 		if (!method_exists($this, $functionName)) {
-			user_error('No such method: ' . get_class($this) . '->' . $functionName);
+			// note this will fuck up things if used in a class that extends Model and oerrides __call
+			return call_user_func_array(array('Model', '__call'), array($functionName, $args));
 		}
 		return call_user_func_array(array($this, $functionName), $args);
 	}

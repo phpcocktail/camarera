@@ -35,20 +35,6 @@ class FieldEnum extends \Field {
 	public $validValues = array();
 
 	/**
-	 * I check if value is valid
-	 * @todo fix scope bug here
-	 * @param mixed $value
-	 * @return mixed
-	 * @throws \InvalidArgumentException
-	 */
-	public static function setValue(&$value) {
-		if (!in_array($value, $this->validValues)) {
-			throw new \InvalidArgumentException();
-		}
-		return $value;
-	}
-
-	/**
 	 * I override parent construct and check for validValues config
 	 * @throws \InvalidArgumentException
 	 * @return \FieldEnum
@@ -61,4 +47,21 @@ class FieldEnum extends \Field {
 		return $Field;
 	}
 
+	/**
+	 * I check if value is valid
+	 * @todo fix scope bug here
+	 * @param mixed $value
+	 * @return mixed
+	 * @throws \InvalidArgumentException
+	 */
+	public function setValue($value) {
+		if (!in_array($value, $this->validValues)) {
+			$value = null;
+		}
+		return $value;
+	}
+
+	public function addValue() {
+		throw new \BadMethodCallException('cannot add to enum field');
+	}
 }

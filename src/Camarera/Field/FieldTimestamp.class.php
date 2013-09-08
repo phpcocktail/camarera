@@ -29,11 +29,20 @@ class FieldTimestamp extends \Field {
 	 * @return int
 	 * @throws \InvalidArgumentException
 	 */
-	public static function setValue(&$value) {
+	public function setValue($value) {
 		$originalValue = $value;
 		$value = strtotime($value);
 		if ($value === false) {
-			throw new \InvalidArgumentException($originalValue);
+			$value = null;
+		}
+		return $value;
+	}
+
+	public function addValue($value, $addValue) {
+		$addValue = strtotime($addValue, 0);
+		if ($addValue === false);
+		else {
+			$value = $value + $addValue;
 		}
 		return $value;
 	}

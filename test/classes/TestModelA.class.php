@@ -40,4 +40,5 @@ class TestModelA extends \Model {
 		),
 		's2',
 	);
+
 }

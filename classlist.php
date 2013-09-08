@@ -19,7 +19,7 @@ die('This file is not intended to be run.');
 class AutoloaderNamespaceAliaser extends Camarera\AutoloaderNamespaceAliaser {};
 
 /**
- * root namespace alias for IDEs
+ * root namespace alias for IDEs 
  */
 class FielValidatorMinlength extends Cocktail\FielValidatorMinlength {};
 
@@ -134,7 +134,7 @@ class StoreSqlSqlite3Config extends Camarera\StoreSqlSqlite3Config {};
  * @license DWTFYWT
  * @package Camarera\Store
  * @version 1.1
- *
+ * 
  * @property-read string $id internal ID of the store, in case you use more than one store you can refer them by this ID
  */
 abstract class StoreConfig extends Camarera\StoreConfig {};
@@ -219,14 +219,7 @@ class StoreSqlSqlite3 extends Camarera\StoreSqlSqlite3 {};
 class ModelDeleteConfig extends Camarera\ModelDeleteConfig {};
 
 /**
- * ModelInfoManager is an info registry about Model metadata
- * @todo after initial development, check if extending the Model class is still needed??? (for accessing protected data)
- *
- * @author t
- * @package Camarera\Model
- * @since 1.1
- * @version 1.1
- *
+ * root namespace alias for IDEs 
  */
 class ModelInfoManager extends Camarera\ModelInfoManager {};
 
@@ -250,20 +243,19 @@ class ModelInfoManager extends Camarera\ModelInfoManager {};
  * @version 1.01
  *
  * @property string $ID the unique ID of the object
- * @property-read string[] $idFieldName name of id fields
  * @property-read boolean $isDirty
  * @property-read boolean $isRegistered
- * @property-read string $storeTable
+ * @property-read \ModelLoadConfg $LastLoadConfig
  */
 abstract class Model extends Camarera\Model {};
 
 /**
- * root namespace alias for IDEs
+ * root namespace alias for IDEs 
  */
 class FieldValidationException extends Camarera\FieldValidationException {};
 
 /**
- * root namespace alias for IDEs
+ * root namespace alias for IDEs 
  */
 class ModelValidationException extends Camarera\ModelValidationException {};
 
@@ -274,14 +266,6 @@ class ModelValidationException extends Camarera\ModelValidationException {};
  * @version 1.01
  */
 class ModelSaveConfig extends Camarera\ModelSaveConfig {};
-
-/**
- * I hold options for Model get/load
- * @author t
- * @package Camarera\Model
- * @version 1.01
- */
-class ModelLoadConfig extends Camarera\ModelLoadConfig {};
 
 /**
  * Model and Model data manager. It acts like a multiton pool, but can also store raw data for lazy instantiation.
@@ -295,6 +279,20 @@ class ModelLoadConfig extends Camarera\ModelLoadConfig {};
  * @version 1.01
  */
 class ModelInstanceManager extends Camarera\ModelInstanceManager {};
+
+/**
+ * I hold options for Model get/load
+ * @author t
+ * @package Camarera\Model
+ * @version 1.1
+ *
+ * @method $this setLoadFields(string|array|null $fields)
+ * @method $this setAllowLoad(bool $allowLoad)
+ * @method $this setLoadOrder($loadOrder)
+ * @method $this setRegisteredInstance(bool $registeredInstance)
+ * @method $this setData(array $data)
+ */
+class ModelLoadConfig extends Camarera\ModelLoadConfig {};
 
 /**
  * CollectionBuilder it is yet a draft of a class which would take lot of responsibility from Collection, usually functions
@@ -398,7 +396,7 @@ class LoggerAppend extends Camarera\LoggerAppend {};
 abstract class Config extends Camarera\Config {};
 
 /**
- * root namespace alias for IDEs
+ * root namespace alias for IDEs 
  */
 class ConfigException extends Camarera\ConfigException {};
 

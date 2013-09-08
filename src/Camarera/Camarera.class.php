@@ -522,7 +522,7 @@ class MagicSetException extends MagicGetException {}
 class MagicCallException extends \Exception {
 	function __construct($methodName, $classname, $code=null, $previous=null) {
 		$callerInfo = array_shift($this->getTrace());
-		$message = 'call to undefined methodx ' . $classname . '->' . $methodName . '()	Called in ' . $callerInfo['file'] . ' line ' . $callerInfo['line'];
+		$message = 'call to undefined methodx ' . $classname . '->' . $methodName . '()	Called in ' . @$callerInfo['file'] . ' line ' . @$callerInfo['line'];
 		parent::__construct($message, $code, $previous);
 	}
 }
