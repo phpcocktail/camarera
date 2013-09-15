@@ -16,7 +16,7 @@
  * @version 1.1
  */
 
-class TestModelA extends \Model {
+class TestModelC extends \Model {
 
 	use TraitTestModel;
 
@@ -28,23 +28,52 @@ class TestModelA extends \Model {
 			'validators' => array(
 				'minVal' => 1,
 				'maxVal' => 100,
+
 			),
 		),
 		'x2' => array(
 			'type' => 'integer',
 			'validators' => array(
-				'minVal' => 1,
-				'maxVal' => 1000,
+				array(
+					'callback' => array('FieldValidator','minVal'),
+					'params' => array(1),
+				),
+				array(
+					'callback' => array('FieldValidator','maxVal'),
+					'params' => array(1000),
+				),
 			),
 		),
 		's1' => array(
 			'type' => 'string',
 			'validators' => array(
-				'minLen' => 1,
-				'maxLen' => 10,
+				'lengthBetween' => array(1,10),
+				'uniqueWith' => 's2',
+				'MyValidator::foo' => 1,
+//				array('MyValidator::foo', 2),
+//				array('MyValidator::bar', 3,4,5),
 			),
 		),
-		's2',
+		's2' => array(
+			'type' => 'string',
+			'validators' => array(
+				array(
+					'callback' => array('FieldValidator','lengthBetween'),
+					'params' => array(1,10),
+				),
+				array(
+					'delegate' => true,
+					'params' => array('uniqueWith','s1'),
+				)
+			)
+		)
 	);
+
+	protected static function _getInitialFieldDefs() {
+		$fieldDefs = static::$_fields;
+		$fieldDefs['x1']['validators'][] = function($value) {
+			return $value % 2 ? false : true;
+		};
+	}
 
 }

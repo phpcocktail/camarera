@@ -38,7 +38,8 @@ class ModelInstanceManager {
 	protected static $_registry = array();
 
 	/**
-	 * I need no setup
+	 * I am a static class
+	 * @codeCoverageIgnore
 	 */
 	private final function __construct() {}
 
@@ -182,7 +183,7 @@ class ModelInstanceManager {
 	 * @param string|null $precalculatedId I will send this if it is already pre-calculated (otherwised guessed)
 	 * @throws \BadMethodCallException
 	 */
-	public static function set($modelClass, $dataOrObject=null, $precalculatedId=null) {
+	public static function set($modelClass, $dataOrObject, $precalculatedId=null) {
 
 		if (is_array($dataOrObject) && !empty($dataOrObject));
 		elseif (is_object($dataOrObject) && ($dataOrObject instanceof $modelClass)) {
@@ -206,7 +207,7 @@ class ModelInstanceManager {
 			: $precalculatedId;
 
 		if (is_null($id)) {
-			throw new \InvalidArgumentException('ID shouldn\'t be null here');
+			throw new \InvalidArgumentException('ModelInstanceManager::set() - cannot determine ID for data or object');
 		}
 
 		self::$_registry[$modelClass][$id] = $dataOrObject;

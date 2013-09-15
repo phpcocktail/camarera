@@ -87,13 +87,14 @@ abstract class Model {
 	protected static function _inflate() {
 		$classname = get_called_class();
 		if (!\ModelInfoManager::isInflated($classname)) {
-			\ModelInfoManager::inflate(
+			$delegatedValidators = \ModelInfoManager::inflate(
 				$classname,
 				static::_getInitialFieldDefs(),
 				static::$_idFieldName,
 				static::$_storeTable,
 				static::$_collectionClassname
 			);
+			static::$_validators = array_merge(static::$_validators, $delegatedValidators);
 		}
 		return $classname;
 	}
@@ -273,7 +274,9 @@ abstract class Model {
 			case $field === 'isRegistered':
 				return $this->_isRegistered;
 			case $field === 'isValid':
-				return $this->_isValid;
+				return is_null($this->_validationErrors)
+					? null
+					: (count($this->_validationErrors) ? false : true);
 			case $field === 'LastLoadConfig':
 				return $this->_LastLoadConfig;
 			//case $field === 'isLoaded':
@@ -349,6 +352,7 @@ abstract class Model {
 		}
 		else {
 			$this->_values[$field] = $value;
+			$this->_resetValidation();
 		}
 		return $this;
 	}
@@ -519,6 +523,7 @@ abstract class Model {
 		// I call field object's set validator/processor. Normally it returns $value unintact, otherwise modifies it
 		$Field = $this->field($field);
 		$this->_values[$field] = $Field->setValue($value);
+		$this->_resetValidation();
 		return $this;
 	}
 	/**
@@ -539,7 +544,7 @@ abstract class Model {
 		}
 		foreach ($values as $eachFieldName=>&$eachValue) {
 			try {
-				$this->setValue($eachFieldName, $eachValue);
+				$this->_setValue($eachFieldName, $eachValue);
 			}
 			catch (\Exception $e) {
 				if ($throw) {
@@ -564,6 +569,7 @@ abstract class Model {
 		}
 		$value = $this->getValue($field);
 		$this->_values[$field] = $Field->addValue($value, $addValue);
+		$this->_resetValidation();
 		return $this;
 	}
 	/**
@@ -725,8 +731,9 @@ abstract class Model {
 		elseif (is_array($data) && !empty($data)) {
 			$this->_values = array();
 			foreach ($data as $eachFieldName=>&$eachValue) {
-				$this->_values[$eachFieldName] = $eachValue;
+				$this->_setValue($eachFieldName, $eachValue);
 			}
+			$this->_resetValidation();
 			$this->setStoredValues();
 			$this->_loadedFields = $LoadConfig->loadFields;
 			$this->_LastLoadConfig = $LoadConfig;
@@ -759,7 +766,7 @@ abstract class Model {
 		}
 		if ($ret === false) {
 			// @todo
-			throw new \UnImplementedException();
+//			throw new \UnImplementedException();
 			return false;
 		}
 		return $ret;
@@ -788,49 +795,92 @@ abstract class Model {
 	// VALIDATION
 	//////////////////////////////////////////////////////////////////////////
 
-	protected $_isValid = null;
+	/**
+	 * @var string I am a prefix to the validator classname to be used. It is static, so per class. You have to define it, there is no setter.
+	 */
+	protected static $_validatorNamespace = '';
 
-	protected $_validationErrors = array();
+	/**
+	 * @var array I hold Model level validators to be executed or delegated upwards (to store)
+	 */
+	protected static $_validators = array();
+
+	/**
+	 * @var array I shall be an array of store related validations, typically include related to models and their
+	 * 		relations. eg. a store validator could check if a book's author by ID exists or not, or eg. a book's price
+	 * 		must be under a limit if their author belongs to a given group, etc. (these data get context and is stored
+	 * 		in a store, thus the naming. It has nothing to do with validating sores)
+	 * @todo implement this
+	 */
+	protected $_storeValidators = array();
+
+	/**
+	 * @var array I contain the resulting errors from validation, or empty array if object was valid
+	 */
+	protected $_validationErrors = null;
+
+	/**
+	 * I reset validation errors I shall be called whenever a value in the model changes
+	 * @return $this
+	 */
+	protected function _resetValidation() {
+		$this->_validationErrors = null;
+		return $this;
+	}
 
 	public function validate() {
-		$this->_isValid = true;
+//		$this->_validationErrors = array();
+//		$uniqueChecks = array();
+//		$validationErrors = array();
+//		$classname = get_class($this);
+//		$fields = \ModelInfoManager::getField($classname);
+//		foreach ($fields as $eachFieldName=>$EachField) {
+//			try {
+//				if ($EachField->unique) {
+//					$uniqueChecks[] = $eachFieldName;
+//				}
+//				if ($EachField->uniqueWith) {
+//					$check = array($eachFieldName, $EachField->uniqueWith);
+//					if (!in_array($check, $uniqueChecks)) {
+//						$uniqueChecks[] = $check;
+//					}
+//				}
+//				$value = array_key_exists($eachFieldName, $this->_values)
+//					? $this->_values[$eachFieldName]
+//					: null;
+//				$errors = $EachField->validate($value, $this);
+//				if (!empty($errors)) {
+//					$validationErrors[$eachFieldName] = $errors;
+//				}
+//			}
+//			catch (\FieldValidationException $e) {
+//				$validationErrors[$eachFieldName][] = $e->getMessage();
+//			}
+//		}
+//
+//		// unique checks
+//
+//		if (count($validationErrors)) {
+//			$this->_validationErrors = $validationErrors;
+//		}
+
 		$this->_validationErrors = array();
-		$uniqueChecks = array();
 		$validationErrors = array();
-		$classname = get_class($this);
-		$fields = \ModelInfoManager::getField($classname);
-		foreach ($fields as $eachFieldName=>$EachField) {
-			try {
-				if ($EachField->unique) {
-					$uniqueChecks[] = $eachFieldName;
-				}
-				if ($EachField->uniqueWith) {
-					$check = array($eachFieldName, $EachField->uniqueWith);
-					if (!in_array($check, $uniqueChecks)) {
-						$uniqueChecks[] = $check;
-					}
-				}
-				$value = array_key_exists($eachFieldName, $this->_values)
-					? $this->_values[$eachFieldName]
-					: null;
-				$errors = $EachField->validate($value, $this);
-				if (!empty($errors)) {
-					$validationErrors[$eachFieldName] = $errors;
-				}
-			}
-			catch (\FieldValidationException $e) {
-				$validationErrors[$eachFieldName][] = $e->getMessage();
-			}
+
+		foreach ($this->field() as $eachFieldName=>$eachField) {
+			die('validate fields here');
 		}
 
-		// unique checks
+		$this->_validationErrors = $validationErrors;
 
-		if (count($validationErrors)) {
-			$this->_isValid = false;
-			$this->_validationErrors = $validationErrors;
-			#echop($validationErrors); die('HUBU');
-		}
 		return $this;
+	}
+
+	public static function validatorNamespace($newNamespace = null) {
+		if (!is_null($newNamespace)) {
+			static::$_validatorNamespace = $newNamespace;
+		}
+		return static::$_validatorNamespace;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

@@ -52,7 +52,6 @@ class ModelInfoManagerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	/**
-	 * @expectedException \RuntimeException
 	 * @covers ModelInfoManager::getField
 	 */
 	function testGetField() {
@@ -88,13 +87,24 @@ class ModelInfoManagerTest extends PHPUnit_Framework_TestCase {
 		// wrong fieldname
 		$this->assertNull(ModelInfoManager::getField($classname, 'asd'));
 
-		try {
-			ModelInfoManager::getField($classname, array());
-			$this->assertTrue(false);
-		}
-		catch (\InvalidArgumentException $e) {}
-
+	}
+	/**
+	 * @expectedException RuntimeException
+	 * @expectedExceptionMessage t been inflated
+	 * @covers ModelInfoManager::getField
+	 */
+	function testGetFieldException1() {
 		ModelInfoManager::getField('Foo');
+	}
+	/**
+	 * @expectedException InvalidArgumentException
+	 * @expectedExceptionMessage invalid $fieldnames sent
+	 * @covers ModelInfoManager::getField
+	 */
+	function testGetFieldException2() {
+		$classname = 'TestModelA';
+		$classname::serve();
+		ModelInfoManager::getField($classname, array());
 	}
 
 	/**
@@ -168,6 +178,225 @@ class ModelInfoManagerTest extends PHPUnit_Framework_TestCase {
 	}
 
 	/**
+	 * @expectedException \ClassDefinitionException
+	 * @expectedExceptionMessage x3,x4 are ID fields but
+	 * @covers ModelInfoManager::inflate
+	 */
+	function testInflateIdfieldException() {
+		$fields = array('x1','x2','s1','s2');
+		ModelInfoManager::inflate(
+			'Foo',
+			$fields,
+			array('x1','x2','x3','x4'),
+			null,
+			null
+		);
+		$this->assertTrue(false);
+	}
+
+	/**
+	 * @covers ModelInfoManager::inflate
+	 */
+	function testInflate() {
+		$classname = 'FooBar';
+		$fields = array(
+			'x1' => array(
+				'classname' => '\Field',
+			),
+			'x2',
+			's1',
+			's2'
+		);
+		ModelInfoManager::inflate(
+			$classname,
+			$fields,
+			null,
+			'FooBarTable',
+			null
+		);
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_idFieldNames');
+		$this->assertEquals('_id', $values[$classname]);
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_storeTables');
+		$this->assertEquals('FooBarTable', $values[$classname]);
+
+		$classname = 'FooDamnBar';
+		$fields = array(
+			'x1',
+			'x2',
+			's1',
+			's2'
+		);
+		ModelInfoManager::inflate(
+			$classname,
+			$fields,
+			array('x1','x2'),
+			null,
+			null
+		);
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_idFieldNames');
+		$this->assertEquals(array('x1','x2'), $values[$classname]);
+		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_storeTables');
+		$this->assertEquals('foo_damn_bar', $values[$classname]);
+	}
+
+	/**
+	 * @dataProvider testInflateValidatorsProvider
+	 * @covers ModelInfoManager::inflate
+	 */
+	function testInflateValidators($validators, $expectedInflatedValidator, $expectedAsDelegated) {
+		$classname = 'FooBar';
+		$fields = array(
+			'x1' => array(
+				'type' => 'integer',
+				'validators' => $validators
+			)
+		);
+		$delegatedValidators = ModelInfoManager::inflate(
+			$classname,
+			$fields,
+			null,
+			null,
+			null
+		);
+
+		if ($expectedAsDelegated) {
+//			print_r($delegatedValidators); die;
+			foreach ($delegatedValidators as $eachValidator) {
+				$this->assertEquals($expectedInflatedValidator, $eachValidator);
+			}
+		}
+		else {
+			print_r($delegatedValidators);
+			$this->assertEmpty($delegatedValidators);
+			$field = ModelInfoManager::getField($classname, 'x1');
+			foreach ($field->validators as $eachValidator) {
+				$this->assertEquals($expectedInflatedValidator, $eachValidator);
+			}
+		}
+
+	}
+
+	function testInflateValidatorsProvider() {
+		$ret = array(
+			array(
+				array(
+					'minVal' => 1,
+					'ValidatorField::minVal' => 1,
+					array('minVal', 1),
+					array('minVal', array(1)),
+					array('callback'=>'minVal','params'=>array(1)),
+					array('callback'=>'minVal','params'=>array(1),'options'=>array()),
+					array('callback'=>'ValidatorField::minVal','params'=>array(1),'options'=>array()),
+				),
+				array(
+					'callback' => array('ValidatorField', 'minVal'),
+					'params' => array(1),
+				),
+				false
+			),
+			array(
+				array(
+					'minVal' => array(1),
+				),
+				array(
+					'callback' => array('ValidatorField', 'minVal'),
+					'params' => array(1),
+				),
+				false
+			),
+			array(
+				array(
+					'!minVal' => 1,
+					array('!minVal', 1),
+					array('!minVal', array(1)),
+					array('minVal', array(1), array('negated'=>true)),
+					array('!minVal', array(1), array('negated'=>false)),
+				),
+				array(
+					'callback' => array('ValidatorField', 'minVal'),
+					'params' => array(1),
+					'options' => array('negated' => true),
+				),
+				false
+			),
+			array(
+				array(
+					'!minVal' => array(1),
+				),
+				array(
+					'callback' => array('ValidatorField', 'minVal'),
+					'params' => array(1),
+					'options' => array('negated' => true),
+				),
+				false
+			),
+			array(
+				array(
+					'always',
+					array('always', array(), array()),
+				),
+				array(
+					'callback' => array('ValidatorField', 'always'),
+					'params' => array(),
+				),
+				false
+			),
+			array(
+				array(
+					'!always',
+					array('!always', array(), array()),
+					array('always', array(), array('negated'=>true)),
+				),
+				array(
+					'callback' => array('ValidatorField', 'always'),
+					'params' => array(),
+					'options' => array('negated' => true),
+				),
+				false
+			),
+			array(
+				array(
+					'between' => array(2,3),
+					array('between', 2, 3),
+					array('between', array(2, 3), array()),
+				),
+				array(
+					'callback' => array('ValidatorField', 'between'),
+					'params' => array(2,3),
+				),
+				false
+			),
+			array(
+				array(
+					'!between' => array(2,3),
+					array('!between', 2, 3),
+					array('!between', array(2, 3)),
+					array('!between', array(2, 3), array('negated'=>false)),
+				),
+				array(
+					'callback' => array('ValidatorField', 'between'),
+					'params' => array(2,3),
+					'options' => array('negated'=>true),
+				),
+				false
+			),
+			array(
+				array(
+					'unique',
+					'unique' => true,
+				),
+				array(
+					'callback' => array('delegated', 'unique'),
+					'params' => array('x1'),
+				),
+				true
+			)
+		);
+//		$ret = array_slice($ret, 0 ,1);
+		return $ret;
+	}
+
+	/**
 	 * @dataProvider inflateExceptionsProvider
 	 * @covers ModelInfoManager::inflate
 	 */
@@ -231,68 +460,6 @@ class ModelInfoManagerTest extends PHPUnit_Framework_TestCase {
 				'invalid field def',
 			),
 		);
-	}
-
-	/**
-	 * @expectedException \ClassDefinitionException
-	 * @expectedExceptionMessage x3,x4 are ID fields but
-	 * @covers ModelInfoManager::inflate
-	 */
-	function testInflateIdfieldException() {
-		$fields = array('x1','x2','s1','s2');
-		ModelInfoManager::inflate(
-			'Foo',
-			$fields,
-			array('x1','x2','x3','x4'),
-			null,
-			null
-		);
-		$this->assertTrue(false);
-	}
-
-	/**
-	 * @covers ModelInfoManager::inflate
-	 */
-	function testInflate() {
-		$classname = 'FooBar';
-		$fields = array(
-			'x1' => array(
-				'classname' => '\Field',
-			),
-			'x2',
-			's1',
-			's2'
-		);
-		ModelInfoManager::inflate(
-			$classname,
-			$fields,
-			null,
-			'FooBarTable',
-			null
-		);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_idFieldNames');
-		$this->assertEquals('_id', $values[$classname]);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_storeTables');
-		$this->assertEquals('FooBarTable', $values[$classname]);
-
-		$classname = 'FooDamnBar';
-		$fields = array(
-			'x1',
-			'x2',
-			's1',
-			's2'
-		);
-		ModelInfoManager::inflate(
-			$classname,
-			$fields,
-			array('x1','x2'),
-			null,
-			null
-		);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_idFieldNames');
-		$this->assertEquals(array('x1','x2'), $values[$classname]);
-		$values = PHPUnit_Framework_Assert::readAttribute('ModelInfoManager', '_storeTables');
-		$this->assertEquals('foo_damn_bar', $values[$classname]);
 	}
 
 	/**

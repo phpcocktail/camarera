@@ -46,7 +46,7 @@ class TestModelAStoreFixture extends \StoreSql {
 		}
 	}
 
-	function saveModel(\Model $Object, \ModelSaveConfig $SaveConfig) {
+	function updateModel(\Model $Object, \ModelSaveConfig $SaveConfig) {
 		switch ($Object->ID) {
 			default:
 				throw new \RuntimeException;

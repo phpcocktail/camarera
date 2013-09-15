@@ -19,11 +19,6 @@ die('This file is not intended to be run.');
 class AutoloaderNamespaceAliaser extends Camarera\AutoloaderNamespaceAliaser {};
 
 /**
- * root namespace alias for IDEs 
- */
-class FielValidatorMinlength extends Cocktail\FielValidatorMinlength {};
-
-/**
  * special enum field for booleain (on/off) fields
  *
  * @author t
@@ -81,7 +76,7 @@ class FieldSet extends Camarera\FieldSet {};
  * @license DWTFYWT
  * @version 1.1
  */
-class FieldEmail extends Camarera\FieldEmail {};
+class OBSFieldEmail extends Camarera\OBSFieldEmail {};
 
 /**
  * string field for models
@@ -219,7 +214,14 @@ class StoreSqlSqlite3 extends Camarera\StoreSqlSqlite3 {};
 class ModelDeleteConfig extends Camarera\ModelDeleteConfig {};
 
 /**
- * root namespace alias for IDEs 
+ * ModelInfoManager is an info registry about Model metadata
+ * @todo after initial development, check if extending the Model class is still needed??? (for accessing protected data)
+ *
+ * @author t
+ * @license DWTFYWT
+ * @package Camarera\Model
+ * @version 1.1
+ *
  */
 class ModelInfoManager extends Camarera\ModelInfoManager {};
 
@@ -243,7 +245,6 @@ class ModelInfoManager extends Camarera\ModelInfoManager {};
  * @version 1.01
  *
  * @property string $ID the unique ID of the object
- * @property-read boolean $isDirty
  * @property-read boolean $isRegistered
  * @property-read \ModelLoadConfg $LastLoadConfig
  */
@@ -323,6 +324,44 @@ class Collection extends Camarera\Collection {};
  * @version 1.01
  */
 class CollectionLoadConfig extends Camarera\CollectionLoadConfig {};
+
+/**
+ * ValidatorField is a set of methodsfor the field layer of validation. Each method should accept a value and zero or
+ * 		more params and return true or false (and must not modify input value).
+ * validators in this class can be referenced easily in the model's field def as eg.
+ * 		'validators' => array(
+ * 			'minVal' => 1,
+ * 			'maxLength' => 2,
+ * 			'notIn' => array(3,4,5),
+ * 			array('notEquals', 6),
+ * 			array('notEquals', 7),
+ * 			array('notIn', 8, 9, 10),
+ * 		),
+ * all validators which does not state a classname and not found in the ValidatorField class will be delegated (to model
+ * 		level validation)
+ * to define your own field validator methods:
+ *		extend ValidatorField in root namespace and add your methods, OR
+ *		create your arbitrary class and reference it by eg. 'MyValidator::validate' => 1
+ * 		AND define a constant for easy autocomplete access
+ *
+ * @author t
+ * @license DWTFYWT
+ * @package Camarera\Validator
+ * @version 1.1
+ *
+ */
+class ValidatorField extends Camarera\ValidatorField {};
+
+/**
+ * Validator is just a common abstract with some definitions
+ *
+ * @author t
+ * @license DWTFYWT
+ * @package Camarera\Validator
+ * @version 1.1
+ *
+ */
+class Validator extends Camarera\Validator {};
 
 /**
  * I will aggregate log content and output in __destruct(), in html format

@@ -35,28 +35,30 @@ class Field extends \Config {
 	 * 		note: should be protected or private static but FieldXxx does not have inflating mechanism which could check
 	 * 		if that field is defined. So it goes dynamic for now
 	 */
+	// @todo sanitize this and make it work
 	protected $_storeQuote = '';
 
 	/**
 	 * @var mixed when an empty object is created, this value will be used (but not when loading partial datasets)
 	 */
+	// @todosanitize this andmakeit work
 	public $default = null;
 
 	/**
 	 * @var boolean this controls if field is readable by magic getters (may have further effects, eg. when listing
 	 *	object properties in applications)
 	 */
-	public $readable = true;
+//	public $readable = true;
 	/**
 	 * @var boolean this controls if field is writable by magis setters (may have further effects, eg. when editing
 	 *	an object in a form, in applications)
 	 */
-	public $writable = true;
+//	public $writable = true;
 
 	/**
 	 * @var boolean if true, must have a value set
 	 */
-	public $mandatory=false;
+//	public $mandatory=false;
 
 	/**
 	 * @var numeric minimum value accepted
@@ -105,9 +107,12 @@ class Field extends \Config {
 	public $uniqueWith = null;
 
 	/**
-	 * @var callable[] extra validators to be used
+	 * @var array keys mark which method to use, value is passed to the validator as param.
+	 * 		key can have 2 formats: 'ClassName::method' or simply 'method'. In first case, Model class's
+	 * 		$_validationClassName is prepended, in latter case, method will be looked up in ValidationField
+	 * 		class (prefix also applies!)
 	 */
-//	public $validators = array();
+	public $validators = array();
 
 	/** @var string this is just to let this param be in the getter config */
 	protected $classname = null;

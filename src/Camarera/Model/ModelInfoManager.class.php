@@ -10,11 +10,6 @@
  * and/or modify it under the terms of the Do What The Fuck You Want
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://www.wtfpl.net/ for more details.
- *
- * @author t
- * @since 1.0
- * @license DWTFYWT
- * @version 1.01
  */
 namespace Camarera;
 
@@ -23,8 +18,8 @@ namespace Camarera;
  * @todo after initial development, check if extending the Model class is still needed??? (for accessing protected data)
  *
  * @author t
+ * @license DWTFYWT
  * @package Camarera\Model
- * @since 1.1
  * @version 1.1
  *
  */
@@ -69,6 +64,16 @@ class ModelInfoManager {
 	 * @var string[] names of related collection classes, indexed by model classname
 	 */
 	protected static $_collectionClassnames = array();
+
+
+
+	/**
+	 * I am a static class
+	 * @codeCoverageIgnore
+	 */
+	private final function __construct() {}
+
+
 
 	/**
 	 * I take a config array of field definitions and convert them to real FieldXxx objects
@@ -125,8 +130,8 @@ class ModelInfoManager {
 					$eachField = $fieldClassname::serve($eachField);
 				}
 				catch (\InvalidArgumentException $e) {
-					if (preg_match('/the field (.+) does not exist/', $e->getMessage())) {
-						$msg = 'undefined config property found while inflating class ' . $classname . ' see previous exception for details';
+					if (preg_match('/the field (.+) does not exist/', $e->getMessage(), $matches)) {
+						$msg = 'undefined config property (' . $matches[1] . ') found while inflating class ' . $classname . ' see previous exception for details';
 						$e = new \ClassDefinitionException($msg, 0, $e);
 					}
 					throw $e;
@@ -177,6 +182,20 @@ class ModelInfoManager {
 			}
 		};
 
+		// process field validators
+		$delegatedValidators = array();
+		$validatorNamespace = $classname::validatorNamespace();
+		$validatorClassname = trim($validatorNamespace . '\ValidatorField', '\\');
+		foreach ($fields as &$EachField) {
+			list($inflatedValidators, $inflatedDelegatedValidators) =
+				\Validator::inflateValidators(
+					$EachField,
+					$validatorClassname
+				);
+			$EachField->validators = $inflatedValidators;
+			$delegatedValidators = array_merge($delegatedValidators, $inflatedDelegatedValidators);
+		}
+
 		static::$_fields[$classname] = $fields;
 
 		if (empty($storetable)) {
@@ -192,6 +211,8 @@ class ModelInfoManager {
 			$collectionClassname = 'Collection';
 		}
 		static::$_collectionClassnames[$classname] = $collectionClassname;
+
+		return $delegatedValidators;
 
 	}
 
