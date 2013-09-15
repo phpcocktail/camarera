@@ -147,7 +147,9 @@ class Util {
 	 * @return mixed
 	 */
 	public static function toString($content) {
-		if (is_scalar($content));
+		if (is_scalar($content)) {
+			$content = '' . $content;
+		}
 		elseif (is_array($content)) {
 			foreach ($content as &$eachContent) {
 				$eachContent = static::toString($eachContent);
